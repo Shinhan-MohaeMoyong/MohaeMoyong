@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import shinhan.mohaemoyong.server.exception.OAuth2AuthenticationProcessingException;
-import shinhan.mohaemoyong.server.model.entity.User;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.oauth2.AuthProvider;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.oauth2.security.oauth2.user.OAuth2UserInfo;

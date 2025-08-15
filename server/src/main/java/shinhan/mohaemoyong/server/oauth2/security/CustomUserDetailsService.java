@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.exception.ResourceNotFoundException;
-import shinhan.mohaemoyong.server.model.entity.User;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 
 

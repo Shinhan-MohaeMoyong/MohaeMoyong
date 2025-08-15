@@ -5,7 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import shinhan.mohaemoyong.server.exception.ResourceNotFoundException;
-import shinhan.mohaemoyong.server.model.entity.User;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.UserRepository;
