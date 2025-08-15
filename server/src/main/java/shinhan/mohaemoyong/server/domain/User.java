@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.model.entity;
+package shinhan.mohaemoyong.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import shinhan.mohaemoyong.server.exception.BadRequestException;
-import shinhan.mohaemoyong.server.model.entity.User;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.oauth2.AuthProvider;
 import shinhan.mohaemoyong.server.oauth2.payload.ApiResponse;
 import shinhan.mohaemoyong.server.oauth2.payload.AuthResponse;
