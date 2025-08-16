@@ -34,8 +34,7 @@ public class Comments {
     @JoinColumn(name = "id")
     private User user;
 
-    @Lob
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @CreationTimestamp

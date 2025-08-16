@@ -31,8 +31,8 @@ public class Plans {
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
-    @Lob
-    @Column(name = "content")
+
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "image_url", length = 512) // 255 초과
