@@ -8,6 +8,7 @@ import shinhan.mohaemoyong.server.dto.HomeWeekResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface PlanRepository extends JpaRepository<Plans, Long> {
 
@@ -30,4 +31,15 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
             @Param("endOfWeek") LocalDateTime endOfWeek
     );
 
+    /** DetailPlan 조회(작성자 fetch). 댓글은 분리 API에서 처리 */
+    @Query("""
+        select p
+        from Plans p
+          join fetch p.user u
+        where p.planId = :planId
+          and u.id = :userId
+          and p.deletedAt is null
+    """)
+    Optional<Plans> findDetailByOwner(@Param("userId") Long userId,
+                                      @Param("planId") Long planId);
 }
