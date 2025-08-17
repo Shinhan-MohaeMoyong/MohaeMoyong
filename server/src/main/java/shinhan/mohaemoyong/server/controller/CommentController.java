@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.CommentCountResponse;
 import shinhan.mohaemoyong.server.dto.CommentListItemDto;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
@@ -39,7 +40,7 @@ public class CommentController {
             Pageable pageable,
             @CurrentUser UserPrincipal user
     ) {
-        return commentQueryService.getComments(planId, pageable);
+        return commentQueryService.getComments(planId, pageable, user);
 
     }
 }

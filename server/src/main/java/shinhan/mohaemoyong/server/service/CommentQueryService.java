@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.domain.Comments;
 import shinhan.mohaemoyong.server.dto.CommentListItemDto;
+import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.CommentPhotoRepository;
 import shinhan.mohaemoyong.server.repository.CommentRepository;
 
@@ -21,11 +22,8 @@ public class CommentQueryService {
 
     private final CommentRepository commentRepository;
     private final CommentPhotoRepository commentPhotoRepository;
-    // private final PlanAccessService planAccessService; // 접근제어 넣고 싶으면 활성화
 
-    public Page<CommentListItemDto> getComments(Long planId, Pageable pageable/*, UserPrincipal user*/) {
-        // planAccessService.checkReadable(planId, user); // 접근제어 필요 시
-
+    public Page<CommentListItemDto> getComments(Long planId, Pageable pageable, UserPrincipal user) {
         // 1) 댓글 ID만 페이징 (createdAt DESC)
         Page<Long> idPage = commentRepository.findPageIdsByPlanId(planId, pageable);
         List<Long> ids = idPage.getContent();
