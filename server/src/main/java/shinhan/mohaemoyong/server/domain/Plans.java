@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import shinhan.mohaemoyong.server.dto.DetailPlanUpdateRequest;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -108,5 +109,43 @@ public class Plans {
     void addComment(Comments c) {
         comments.add(c);
         if (c.getPlan() != this) c.setPlanInternal(this);
+    }
+
+
+    public void applyUpdate(DetailPlanUpdateRequest req, LocalDateTime now) {
+        if (req.title()        != null) this.title = req.title();
+        if (req.content()      != null) this.content = req.content();
+        if (req.imageUrl()     != null) this.imageUrl = req.imageUrl();
+        if (req.place()        != null) this.place = req.place();
+        if (req.startTime()    != null) this.startTime = req.startTime();
+        if (req.endTime()      != null) this.endTime = req.endTime();
+        if (req.isCompleted()  != null) this.isCompleted = req.isCompleted();
+        if (req.hasSavingsGoal()!= null) this.hasSavingsGoal = req.hasSavingsGoal();
+
+        // savingsAmount 규칙
+        if (req.hasSavingsGoal() != null) {
+            if (req.hasSavingsGoal()) {
+                if (req.savingsAmount() != null) this.savingsAmount = req.savingsAmount();
+            } else {
+                this.savingsAmount = null;
+            }
+        } else if (req.savingsAmount() != null && this.hasSavingsGoal) {
+            this.savingsAmount = req.savingsAmount();
+        }
+
+        if (req.privacyLevel() != null) this.privacyLevel = req.privacyLevel();
+
+        this.updatedAt = now;
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    public void softDelete(LocalDateTime now) {
+        if (this.deletedAt == null) {
+            this.deletedAt = now;
+            this.updatedAt = now;
+        }
     }
 }
