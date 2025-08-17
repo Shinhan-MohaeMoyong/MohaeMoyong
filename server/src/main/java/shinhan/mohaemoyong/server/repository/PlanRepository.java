@@ -23,6 +23,7 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
           AND p.deletedAt IS NULL
           AND p.startTime < :endOfWeek
           AND p.endTime   >= :startOfWeek
+          AND p.privacyLevel <> 'PRIVATE'
         ORDER BY p.startTime ASC
 """)
     List<HomeWeekResponse> findWeeklyPlans(
