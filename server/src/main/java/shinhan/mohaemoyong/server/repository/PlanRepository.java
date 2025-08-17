@@ -1,11 +1,13 @@
 package shinhan.mohaemoyong.server.repository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.dto.HomeWeekResponse;
 
+import java.awt.print.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,4 +45,20 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
     """)
     Optional<Plans> findDetailByOwner(@Param("userId") Long userId,
                                       @Param("planId") Long planId);
+
+    @Query("""
+        SELECT p FROM Plans p
+        WHERE p.user.id = :friendId
+          AND p.deletedAt IS NULL
+          AND p.privacyLevel = 'PUBLIC'
+          AND p.startTime < :endOfWeek
+          AND p.endTime   >= :startOfWeek
+        ORDER BY p.createdAt DESC
+""")
+    List<Plans> findRecentPublicPlansThisWeek(
+            @Param("friendId") Long friendId,
+            @Param("startOfWeek") LocalDateTime startOfWeek,
+            @Param("endOfWeek") LocalDateTime endOfWeek
+    );
+
 }
