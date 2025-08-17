@@ -4,21 +4,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.dto.DetailPlanResponse;
+import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
+import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.DetailPlanService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/{userId}/plans")
+@RequestMapping("/api/v1/plans")
 public class DetailPlanController {
 
     private final DetailPlanService detailPlanService;
 
-    // GET /api/users/{userId}/plans/{planId}
+    // GET /api/v1/plans/{planId}
     @GetMapping("/{planId}")
     public ResponseEntity<DetailPlanResponse> getDetail(
-            @PathVariable Long userId,
+            @CurrentUser UserPrincipal userPrincipal,
             @PathVariable Long planId
     ) {
-        return ResponseEntity.ok(detailPlanService.getDetail(userId, planId));
+        Long loginUserId = userPrincipal.getId();
+        return ResponseEntity.ok(detailPlanService.getDetail(loginUserId, planId));
     }
 }
