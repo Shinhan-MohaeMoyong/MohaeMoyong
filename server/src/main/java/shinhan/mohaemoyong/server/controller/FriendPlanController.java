@@ -2,9 +2,12 @@ package shinhan.mohaemoyong.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import shinhan.mohaemoyong.server.dto.FriendWeeklyPlanDto;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.FriendPlanService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/friends")
@@ -26,4 +29,12 @@ public class FriendPlanController {
                                 @PathVariable Long friendId) {
         friendPlanService.markPlansAsSeen(userPrincipal.getId(), friendId);
     }
+
+    @GetMapping("/{friendId}/plans/week")
+    public List<FriendWeeklyPlanDto> getFriendWeeklyPlans(
+            @CurrentUser UserPrincipal userPrincipal,
+            @PathVariable Long friendId) {
+        return friendPlanService.getFriendWeeklyPlansWithNewFlag(userPrincipal.getId(), friendId);
+    }
+
 }
