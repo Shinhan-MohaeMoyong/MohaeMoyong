@@ -59,21 +59,21 @@ public class Plans {
 
     // enum 대신 문자열
     @Column(name = "privacy_level", nullable = false, length = 255)
-    private String privacyLevel = "friends_only";
+    private String privacyLevel = "PUBLIC";
 
     @Column(name = "comment_count")
     private Integer commentCount = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private Instant deletedAt;
+    private LocalDateTime deletedAt;
 
     /** Plans(1) ↔ PlanPhotos(N) */
     @OneToMany(mappedBy = "plan",
