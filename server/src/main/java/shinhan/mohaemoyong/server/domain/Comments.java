@@ -10,6 +10,7 @@ import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,14 +40,14 @@ public class Comments {
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private Instant deletedAt;
+    private LocalDateTime deletedAt;
 
     /** Comments(1) ↔ CommentPhotos(N) */
     @OneToMany(mappedBy = "comment",
