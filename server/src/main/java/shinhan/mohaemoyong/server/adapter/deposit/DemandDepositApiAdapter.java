@@ -1,13 +1,14 @@
 package shinhan.mohaemoyong.server.adapter.deposit;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import shinhan.mohaemoyong.server.adapter.common.dto.Header;
+import shinhan.mohaemoyong.server.adapter.common.dto.RequestHeader;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositRequest;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
-import shinhan.mohaemoyong.server.adapter.factory.HeaderFactory;
+import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
 
 @Slf4j
 @Component
@@ -32,17 +33,17 @@ public class DemandDepositApiAdapter {
     /**
      * 수시입출금 상품을 등록하는 API를 호출합니다.
      *
-     * @param userKey              사용자 고유 키
      * @param bankCode             은행 코드
      * @param accountName          상품명
      * @param accountDescription   상품 설명
      * @return 등록된 상품 정보가 담긴 DTO
      */
-    public CreateDemandDepositResponse createDemandDeposit(String userKey, String bankCode, String accountName, String accountDescription) {
-        // 1. API 요청을 위한 URL과 Body를 준비합니다.
+    public CreateDemandDepositResponse createDemandDeposit(String bankCode, String accountName, String accountDescription) {
+        // 1. API 요청을 위한 URL 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/createDemandDeposit";
-        // HeaderFactory를 사용하여 공통 헤더를 생성합니다.
-        Header header = headerFactory.createHeader("createDemandDeposit", userKey);
+        
+        // HeaderFactory를 사용하여 공통 헤더를 생성합니다. (userKey 제외)
+        RequestHeader header = headerFactory.createHeader("createDemandDeposit");
 
         // 요청 DTO를 생성합니다.
         CreateDemandDepositRequest requestBody = new CreateDemandDepositRequest(header, bankCode, accountName, accountDescription);

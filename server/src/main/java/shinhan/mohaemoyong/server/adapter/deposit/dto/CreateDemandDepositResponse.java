@@ -3,7 +3,7 @@ package shinhan.mohaemoyong.server.adapter.deposit.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import shinhan.mohaemoyong.server.adapter.common.dto.Header;
+import shinhan.mohaemoyong.server.adapter.common.dto.ResponseHeader;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateDemandDepositResponse {
     @JsonProperty("Header") // JSON 필드명과 Java 필드명을 매핑
-    private Header Header;
+    private ResponseHeader Header;
 
     @JsonProperty("REC") // JSON 필드명과 Java 필드명을 매핑
     private List<Record> REC;
