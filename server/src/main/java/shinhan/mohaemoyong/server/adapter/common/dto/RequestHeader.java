@@ -7,7 +7,7 @@ import lombok.experimental.SuperBuilder;
 // 요청 전용 헤더 자식 클래스
 @Getter
 @SuperBuilder
-@JsonInclude(JsonInclude.Include.NON_NULL)  // Json 변환시 null인 필드는 제외, null인 필드를 제외하면 되나?
+@JsonInclude(JsonInclude.Include.NON_NULL)  // Json 변환시 null인 필드는 제외
 public class RequestHeader extends BaseHeader { // BaseHeader 상속
     private String apiKey;
     private String userKey;
