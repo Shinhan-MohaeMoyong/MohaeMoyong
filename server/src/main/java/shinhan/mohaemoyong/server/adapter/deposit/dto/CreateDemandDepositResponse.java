@@ -3,7 +3,7 @@ package shinhan.mohaemoyong.server.adapter.deposit.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import shinhan.mohaemoyong.server.adapter.common.dto.ResponseHeader;
+import shinhan.mohaemoyong.server.adapter.common.headerDto.ResponseHeader;
 
 import java.util.List;
 

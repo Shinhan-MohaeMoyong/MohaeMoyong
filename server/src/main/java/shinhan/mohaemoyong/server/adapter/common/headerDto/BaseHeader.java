@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.common.dto;
+package shinhan.mohaemoyong.server.adapter.common.headerDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,4 +19,5 @@ public class BaseHeader {
     private String fintechAppNo;
     private String apiServiceCode;
     private String institutionTransactionUniqueNo;
+
 }

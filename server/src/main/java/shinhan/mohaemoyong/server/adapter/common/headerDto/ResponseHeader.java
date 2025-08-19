@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.common.dto;
+package shinhan.mohaemoyong.server.adapter.common.headerDto;
 
 
 import lombok.Getter;

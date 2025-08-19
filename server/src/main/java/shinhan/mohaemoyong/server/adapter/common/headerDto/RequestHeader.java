@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.common.dto;
+package shinhan.mohaemoyong.server.adapter.common.headerDto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;

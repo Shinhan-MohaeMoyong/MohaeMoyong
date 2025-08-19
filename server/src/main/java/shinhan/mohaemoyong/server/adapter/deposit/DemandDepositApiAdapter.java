@@ -1,11 +1,10 @@
 package shinhan.mohaemoyong.server.adapter.deposit;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import shinhan.mohaemoyong.server.adapter.common.dto.RequestHeader;
+import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositRequest;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
 import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
