@@ -39,4 +39,16 @@ public interface CommentRepository extends JpaRepository<Comments, Long> {
            WHERE c.commentId IN :ids
            """)
     List<Comments> findWithUserByIdIn(@Param("ids") Collection<Long> ids);
+
+    /** planId로 Comment 들고오기 **/
+    @Query("""
+        select c
+        from Comments c
+        join fetch c.plan p
+        join fetch c.user u
+        where c.commentId = :commentId
+          and p.planId   = :planId
+          and c.deletedAt is null
+    """)
+    Optional<Comments> findActiveByIdAndPlanId(Long commentId, Long planId);
 }

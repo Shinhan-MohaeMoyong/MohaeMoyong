@@ -2,6 +2,7 @@ package shinhan.mohaemoyong.server.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import shinhan.mohaemoyong.server.domain.Plans;
@@ -61,4 +62,12 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
             @Param("endOfWeek") LocalDateTime endOfWeek
     );
 
+    /*댓글수 동기화*/
+    @Modifying
+    @Query("""
+        update Plans p
+           set p.commentCount = CASE WHEN p.commentCount > 0 THEN p.commentCount - 1 ELSE 0 END
+         where p.planId = :planId
+    """)
+    int decrementCommentCountSafely(Long planId);
 }

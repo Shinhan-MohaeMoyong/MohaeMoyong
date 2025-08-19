@@ -63,4 +63,8 @@ public class Comments {
         photos.add(photo);
         if (photo.getComment() != this) photo.setCommentInternal(this);
     }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
