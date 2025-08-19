@@ -88,6 +88,16 @@ public class User { // DB의 테이블명은 users, 백엔드 엔티티명은 us
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Accounts> accounts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FriendRequest> sentRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FriendRequest> receivedRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Friendship> friendships = new ArrayList<>();
+
+
     /* ===========================
        연관관계 편의 메서드 (선택)
        (User는 @Setter 허용이지만,
