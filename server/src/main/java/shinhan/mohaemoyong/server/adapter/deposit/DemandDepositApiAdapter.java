@@ -5,9 +5,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositRequest;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
+
 import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.*;
+//import shinhan.mohaemoyong.server.adapter.deposit.dto.UpdateDemandDepositAccountTransferRequest;
+//import shinhan.mohaemoyong.server.adapter.deposit.dto.UpdateDemandDepositAccountTransferResponse;
+//import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositRequest;
+//import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
 
 @Slf4j
 @Component
@@ -27,7 +31,6 @@ public class DemandDepositApiAdapter {
         this.restTemplate = restTemplate;
         this.headerFactory = headerFactory;
     }
-
 
     /**
      * 수시입출금 상품을 등록하는 API를 호출합니다.
@@ -66,4 +69,45 @@ public class DemandDepositApiAdapter {
             throw new RuntimeException("상품 등록에 실패했습니다.");
         }
     }
+
+    // 계좌이체 금융 API
+    /**
+     * 계좌 이체 API를 호출합니다. (새로 추가된 메서드)
+     *
+     * @param userKey                   사용자 고유 키
+     * @param withdrawalAccountNo       출금 계좌 번호
+     * @param depositAccountNo          입금 계좌 번호
+     * @param transactionBalance        거래 금액
+     * @return 이체 결과가 담긴 DTO
+     */
+
+    public UpdateDemandDepositAccountTransferResponse transfer(String userKey, String withdrawalAccountNo, String depositAccountNo, Long transactionBalance) {
+        String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
+        RequestHeader header = headerFactory.createHeader("updateDemandDepositAccountTransfer", userKey);
+
+        UpdateDemandDepositAccountTransferRequest requestBody = new UpdateDemandDepositAccountTransferRequest(
+                header,
+                depositAccountNo,
+                transactionBalance,
+                withdrawalAccountNo,
+                "입금(이체)",
+                "출금(이체)"
+        );
+
+        log.info("계좌 이체 요청: 출금 [{}], 입금 [{}], 금액 [{}]", withdrawalAccountNo, depositAccountNo, transactionBalance);
+
+        try {
+            UpdateDemandDepositAccountTransferResponse response = restTemplate.postForObject(url, requestBody, UpdateDemandDepositAccountTransferResponse.class);
+            if (response == null) {
+                throw new RuntimeException("API 응답이 비어있습니다.");
+            }
+            log.info("계좌 이체 성공. 응답 코드: {}", response.getHeader().getResponseCode());
+            return response;
+        } catch (Exception e) {
+            log.error("계좌 이체 실패. 에러: {}", e.getMessage());
+            throw new RuntimeException("계좌 이체에 실패했습니다.");
+        }
+    }
+
+
 }
