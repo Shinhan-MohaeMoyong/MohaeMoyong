@@ -23,7 +23,7 @@ import java.util.List;
                 @UniqueConstraint(name = "uk_users_userkey", columnNames = "userkey")
         }
 )
-public class User {
+public class User { // DB의 테이블명은 users, 백엔드 엔티티명은 user
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

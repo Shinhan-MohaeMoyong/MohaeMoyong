@@ -2,7 +2,7 @@ package shinhan.mohaemoyong.server.adapter.common.factory;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import shinhan.mohaemoyong.server.adapter.common.dto.RequestHeader;
+import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
