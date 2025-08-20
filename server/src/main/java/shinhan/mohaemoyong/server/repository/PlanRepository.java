@@ -104,4 +104,9 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
          where p.planId = :planId
     """)
     int decrementCommentCountSafely(Long planId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Plans p set p.commentCount = coalesce(p.commentCount,0) + 1 where p.planId = :planId")
+    int incrementCommentCount(@Param("planId") Long planId);
+
 }

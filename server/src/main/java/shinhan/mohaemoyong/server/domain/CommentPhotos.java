@@ -42,4 +42,11 @@ public class CommentPhotos {
 
     // 내부 전용
     void setCommentInternal(Comments c) { this.comment = c; }
+
+    public static CommentPhotos create(String url, Integer orderNo) {
+        CommentPhotos p = new CommentPhotos();
+        p.photoUrl = url;
+        p.orderNo  = (orderNo == null ? 0 : orderNo);
+        return p;
+    }
 }

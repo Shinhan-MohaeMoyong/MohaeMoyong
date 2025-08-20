@@ -138,6 +138,10 @@ public class Plans {
         this.updatedAt = now;
     }
 
+    public void increaseCommentCountInMemory() {
+        commentCount = (commentCount == null ? 1 : commentCount + 1);
+    }
+
     public boolean isDeleted() {
         return this.deletedAt != null;
     }

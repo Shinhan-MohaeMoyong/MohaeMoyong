@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.CommentCountResponse;
 import shinhan.mohaemoyong.server.dto.CommentListItemDto;
+import shinhan.mohaemoyong.server.dto.CreateCommentRequest;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.CommentCommandService;
@@ -42,6 +43,15 @@ public class CommentController {
     ) {
         return commentQueryService.getComments(planId, pageable, user);
 
+    }
+
+
+    @PostMapping
+    public ResponseEntity<Void> createComment(@PathVariable Long planId,
+                                              @CurrentUser UserPrincipal me,
+                                              @RequestBody CreateCommentRequest req) {
+        commentCommandService.createComment(planId, me, req);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{commentId}")
