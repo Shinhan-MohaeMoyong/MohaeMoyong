@@ -13,6 +13,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ResponseHeader extends BaseHeader { // BaseHeader 상속
     // 응답에만 필요한 필드들
-    private String responseCode;    // 응답코드
-    private String responseMessage; // 응답메세지
+    private String responseCode;
+    private String responseMessage;
 }

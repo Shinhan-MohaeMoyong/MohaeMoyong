@@ -78,10 +78,7 @@ public class HeaderFactory {
     }
 
     private String createUniqueNo() {
-//        return institutionCode + getTransmissionDate() + getTransmissionTime() +
-//                ThreadLocalRandom.current().nextInt(100000, 1000000);
-
-        return this.getTransmissionDate() + this.getTransmissionTime() +
+        return institutionCode + getTransmissionDate() + getTransmissionTime() +
                 ThreadLocalRandom.current().nextInt(100000, 1000000);
     }
 }

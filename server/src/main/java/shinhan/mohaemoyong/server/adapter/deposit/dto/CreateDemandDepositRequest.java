@@ -10,7 +10,7 @@ import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 @AllArgsConstructor
 public class CreateDemandDepositRequest {
     @JsonProperty("Header") // JSON 필드명 맵핑
-    private RequestHeader header;
+    private RequestHeader Header;
 
     private String bankCode;
     private String accountName;
