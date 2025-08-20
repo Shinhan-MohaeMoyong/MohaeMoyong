@@ -12,6 +12,5 @@ import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 public class CreateDemandDepositAccountRequest {
     @JsonProperty("Header")
     private RequestHeader header;
-
     private String accountTypeUniqueNo;
 }
