@@ -101,7 +101,8 @@ public class SecurityConfig {
                         "/**.jpg",
                         "/**.html",
                         "/**.css",
-                        "/**.js")
+                        "/**.js",
+                        "/health")
                         .permitAll()
                     .requestMatchers("/auth/**", "/oauth2/**")
                         .permitAll()
