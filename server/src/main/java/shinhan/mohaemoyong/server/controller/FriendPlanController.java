@@ -2,6 +2,7 @@ package shinhan.mohaemoyong.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import shinhan.mohaemoyong.server.dto.FriendPlanDto;
 import shinhan.mohaemoyong.server.dto.FriendWeeklyPlanDto;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
@@ -23,13 +24,8 @@ public class FriendPlanController {
         return friendPlanService.hasNewPlanThisWeek(userPrincipal.getId(), friendId);
     }
 
-    /** 친구 일정 확인 완료 (빨간테두리 제거) */
-    @PostMapping("/{friendId}/plans/seen")
-    public void markPlansAsSeen(@CurrentUser UserPrincipal userPrincipal,
-                                @PathVariable Long friendId) {
-        friendPlanService.markPlansAsSeen(userPrincipal.getId(), friendId);
-    }
 
+    // 친구 이번주 일정 불러오기
     @GetMapping("/{friendId}/plans/week")
     public List<FriendWeeklyPlanDto> getFriendWeeklyPlans(
             @CurrentUser UserPrincipal userPrincipal,
@@ -37,4 +33,11 @@ public class FriendPlanController {
         return friendPlanService.getFriendWeeklyPlansWithNewFlag(userPrincipal.getId(), friendId);
     }
 
+    // 친구 전체 일정 불러오기
+    @GetMapping("/{friendId}/plans")
+    public List<FriendPlanDto> getFriendAllPublicPlans(
+            @CurrentUser UserPrincipal userPrincipal,
+            @PathVariable Long friendId) {
+        return friendPlanService.getFriendAllPublicPlans(userPrincipal.getId(), friendId);
+    }
 }

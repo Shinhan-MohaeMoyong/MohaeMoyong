@@ -16,16 +16,17 @@ public class HomeController {
 
     private final HomeService homeService;
 
-    // GET /api/v1/home/plans/week?userId=1
+    // GET /api/v1/home/plans/week/myPlans
     // ✅ 내 일정 조회 (기존)
     @GetMapping("/plans/week/myPlans")
     public List<HomeWeekResponse> getThisWeekPlans(@CurrentUser UserPrincipal userPrincipal) {
         return homeService.getThisWeekPlans(userPrincipal.getId());
     }
 
-    // ✅ 친구 일정 조회
-    @GetMapping("/plans/week/friend/{friendId}")
-    public List<HomeWeekResponse> getFriendThisWeekPlans(@PathVariable Long friendId) {
-        return homeService.getThisWeekPlans(friendId);
+    // GET /api/v1/home/plans/myPlans
+    // 내 모든 일정 조회
+    @GetMapping("/plans/my")
+    public List<HomeWeekResponse> getAllPlans(@CurrentUser UserPrincipal userPrincipal) {
+        return homeService.getAllPlans(userPrincipal.getId());
     }
 }
