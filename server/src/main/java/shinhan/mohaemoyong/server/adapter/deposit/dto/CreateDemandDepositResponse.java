@@ -12,10 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateDemandDepositResponse {
     @JsonProperty("Header") // JSON 필드명과 Java 필드명을 매핑
-    private ResponseHeader Header;
+    private ResponseHeader header;
 
     @JsonProperty("REC") // JSON 필드명과 Java 필드명을 매핑
-    private List<Record> REC;
+    private Record REC;
 
     // REC 필드 내부의 객체를 표현하는 중첩 클래스
     @Getter
