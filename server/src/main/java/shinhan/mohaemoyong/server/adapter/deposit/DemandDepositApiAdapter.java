@@ -63,6 +63,7 @@ public class DemandDepositApiAdapter {
         } catch (Exception e) {
             // 3. API가 4xx 에러(H1000 등)를 반환했을 때 예외를 처리합니다.
             log.error("수시입출금 상품 등록 실패. 에러: {}", e.getMessage());
+            log.error("수시입출금 상품 등록 중 API 응답 처리 실패.", e);
             throw new RuntimeException("상품 등록에 실패했습니다.");
         }
     }
