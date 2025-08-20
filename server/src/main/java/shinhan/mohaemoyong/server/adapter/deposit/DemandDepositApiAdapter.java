@@ -180,5 +180,42 @@ public class DemandDepositApiAdapter {
         }
     }
 
+    /**
+     * 사용자의 전체 계좌 목록을 조회하는 API를 호출합니다.
+     *
+     * @param userKey 사용자 고유 키
+     * @return 조회된 계좌 목록 정보가 담긴 DTO
+     */
+    public InquireDemandDepositAccountListResponse inquireDemandDepositAccountList(String userKey) {
+        // 1. API 요청을 위한 URL과 Body를 준비합니다. [cite: 1]
+        String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccountList";
+
+        // 이 API는 userKey를 포함하므로, 파라미터가 2개인 createHeader 메서드를 사용합니다.
+        RequestHeader header = headerFactory.createHeader("inquireDemandDepositAccountList", userKey);
+        InquireDemandDepositAccountListRequest requestBody = new InquireDemandDepositAccountListRequest(header);
+
+        log.info("사용자 전체 계좌 목록 조회 요청: userKey [{}]", userKey);
+
+        try {
+            // 2. RestTemplate을 사용하여 POST 요청을 보내고 응답을 받습니다.
+            InquireDemandDepositAccountListResponse response = restTemplate.postForObject(url, requestBody, InquireDemandDepositAccountListResponse.class);
+
+            if (response == null) {
+                throw new RuntimeException("API 응답이 비어있습니다.");
+            }
+
+            log.info("계좌 목록 조회 성공. 응답 코드: {}", response.getHeader().getResponseCode());
+            return response;
+
+        } catch (Exception e) {
+            // 3. 에러 발생 시 예외를 처리합니다.
+            log.error("계좌 목록 조회 실패. 에러: {}", e.getMessage());
+            throw new RuntimeException("계좌 목록 조회에 실패했습니다.");
+        }
+    }
+
+
+
+
 
 }
