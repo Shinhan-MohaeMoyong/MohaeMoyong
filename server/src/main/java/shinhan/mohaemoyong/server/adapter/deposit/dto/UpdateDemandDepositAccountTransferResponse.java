@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class UpdateDemandDepositAccountTransferResponse {
     @JsonProperty("Header")
-    private ResponseHeader Header; // 공통 헤더
+    private ResponseHeader header; // 공통 헤더
 
     @JsonProperty("REC")
     private List<Record> REC; // 거래 목록

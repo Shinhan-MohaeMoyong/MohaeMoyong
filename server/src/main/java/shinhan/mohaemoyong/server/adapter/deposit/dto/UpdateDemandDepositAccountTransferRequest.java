@@ -9,7 +9,7 @@ import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 @AllArgsConstructor
 public class UpdateDemandDepositAccountTransferRequest {
     @JsonProperty("Header")
-    private RequestHeader Header;   // 공통 헤더
+    private RequestHeader header;   // 공통 헤더
     
     // 요청 메세지 명세
     private String depositAccountNo;
