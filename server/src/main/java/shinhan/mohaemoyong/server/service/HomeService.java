@@ -15,6 +15,7 @@ public class HomeService {
 
     private final PlanRepository planRepository;
 
+    // 이번주 일정 조회
     public List<HomeWeekResponse> getThisWeekPlans(Long userId) {
         ZoneId zone = ZoneId.of("Asia/Seoul");
         LocalDate today = LocalDate.now(zone);
@@ -26,5 +27,10 @@ public class HomeService {
         LocalDateTime endOfWeek   = sunday.atTime(LocalTime.MAX);
 
         return planRepository.findWeeklyPlans(userId, startOfWeek, endOfWeek);
+    }
+
+    // 전체 일정 조회
+    public List<HomeWeekResponse> getAllPlans(Long userId) {
+        return planRepository.findAllPlansByUserId(userId);
     }
 }

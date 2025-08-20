@@ -13,6 +13,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
     List<Friendship> findByUser(User user);
 
     boolean existsByUserAndFriend(User user, User friend);
+    boolean existsByUserIdAndFriendId(Long userId, Long friendId);
 
     /** 양방향 관계 한번에 삭제 */
     @Modifying
