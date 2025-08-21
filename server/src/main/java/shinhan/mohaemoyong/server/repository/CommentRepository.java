@@ -51,4 +51,7 @@ public interface CommentRepository extends JpaRepository<Comments, Long> {
           and c.deletedAt is null
     """)
     Optional<Comments> findActiveByIdAndPlanId(Long commentId, Long planId);
+
+    Optional<Comments> findByIdAndPlan_PlanIdAndDeletedAtIsNull(Long commentId, Long planId);
+
 }

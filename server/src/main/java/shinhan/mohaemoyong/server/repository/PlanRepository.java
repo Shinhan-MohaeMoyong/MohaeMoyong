@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import shinhan.mohaemoyong.server.domain.Plans;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.FriendPlanDto;
 import shinhan.mohaemoyong.server.dto.HomeWeekResponse;
 
@@ -109,4 +110,5 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
     @Query("update Plans p set p.commentCount = coalesce(p.commentCount,0) + 1 where p.planId = :planId")
     int incrementCommentCount(@Param("planId") Long planId);
 
+    Long user(User user);
 }
