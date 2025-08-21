@@ -67,6 +67,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User registerNewUser(OAuth2UserRequest oAuth2UserRequest, OAuth2UserInfo oAuth2UserInfo) {
         User user = new User();
 
+        // ❗❗❗ 이 부분이 누락되었을 가능성이 높습니다. ❗❗❗
+        // UUID 등을 사용하여 고유한 userkey를 생성하고 설정합니다.
+        user.setUserkey(oAuth2UserInfo.getId());
+
         user.setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
         user.setProviderId(oAuth2UserInfo.getId());
         user.setName(oAuth2UserInfo.getName());

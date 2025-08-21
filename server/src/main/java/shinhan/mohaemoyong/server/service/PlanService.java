@@ -10,10 +10,12 @@ import shinhan.mohaemoyong.server.dto.*;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -97,5 +99,37 @@ public class PlanService {
                 req.recurrence()            // ✅ 반복 정보 그대로 echo-back
         );
 
+    }
+
+    public List<DetailPlanResponse> selectPlansByDate(LocalDate date){
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+        List<Plans> foundPlans = planRepository.findPlansByDateRangeWithUser(startOfDay, endOfDay);
+
+        return foundPlans.stream()
+                .map(this::ToDTODetailPlanResponse) // DTO 변환 로직을 별도 메서드로 추출
+                .collect(Collectors.toList());
+    }
+
+    // Entity를 DTO로 변환하는 private 헬퍼 메서드
+    private DetailPlanResponse ToDTODetailPlanResponse(Plans plan) {
+        User author = plan.getUser(); // 가독성을 위해 작성자 변수 할당
+        return new DetailPlanResponse(
+                plan.getPlanId(),
+                author.getId(),
+                author.getName(), // User 엔티티에서 이름 가져오기
+                plan.getTitle(),
+                plan.getContent(),
+                plan.getImageUrl(),
+                plan.getPlace(),
+                plan.getStartTime(),
+                plan.getEndTime(),
+                plan.isCompleted(),
+                plan.isHasSavingsGoal(),
+                plan.getSavingsAmount(),
+                plan.getPrivacyLevel(),
+                plan.getCommentCount()
+        );
     }
 }
