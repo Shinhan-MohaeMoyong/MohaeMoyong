@@ -4,10 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import shinhan.mohaemoyong.server.adapter.user.dto.IssuedApiKeyRequest;
-import shinhan.mohaemoyong.server.adapter.user.dto.IssuedApiKeyResponse;
-import shinhan.mohaemoyong.server.adapter.user.dto.SearchRequest;
-import shinhan.mohaemoyong.server.adapter.user.dto.SearchResponse;
+import shinhan.mohaemoyong.server.adapter.user.dto.*;
 
 @Slf4j
 @Component
@@ -55,6 +52,38 @@ public class UserApiAdapter {
             throw new RuntimeException("API 키 발급에 실패했습니다.");
         }
     }
+
+    /**
+     * 신한은행 금융망에 신규 사용자 계정을 생성하는 API를 호출합니다.
+     *
+     * @param userId 생성할 사용자의 ID (이메일)
+     * @return 생성된 사용자의 정보가 담긴 DTO
+     */
+    public CreateMemberResponse createMember(String userId) {
+        // 1. API 요청을 위한 URL과 Body를 준비합니다.
+        String url = baseUrl + "/ssafy/api/v1/member/";
+        CreateMemberRequest requestBody = new CreateMemberRequest(apiKey, userId);
+
+        log.info("신규 사용자 계정 생성 요청: {}", userId);
+
+        try {
+            // 2. RestTemplate을 사용하여 POST 요청을 보내고 응답을 받습니다.
+            CreateMemberResponse response = restTemplate.postForObject(url, requestBody, CreateMemberResponse.class);
+
+            if (response == null) {
+                throw new RuntimeException("API 응답이 비어있습니다.");
+            }
+
+            log.info("사용자 계정 생성 성공. userKey: {}", response.getUserKey());
+            return response;
+
+        } catch (Exception e) {
+            // 3. 에러 발생 시 예외를 처리합니다.
+            log.error("사용자 계정 생성 실패. 에러: {}", e.getMessage());
+            throw new RuntimeException("사용자 계정 생성에 실패했습니다.");
+        }
+    }
+
 
     /**
      * 신한은행 금융 API를 호출하여 사용자 정보를 조회하는 메서드
