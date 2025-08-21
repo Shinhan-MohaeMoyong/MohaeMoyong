@@ -1,15 +1,13 @@
 package shinhan.mohaemoyong.server.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import shinhan.mohaemoyong.server.dto.DetailPlanUpdateRequest;
+import shinhan.mohaemoyong.server.dto.OccurrenceDto;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +33,11 @@ public class Plans {
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
-
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "image_url", length = 512) // 255 초과
+    // 대표 이미지(썸네일)
+    @Column(name = "image_url", length = 512)
     private String imageUrl;
 
     @Column(name = "start_time", nullable = false)
@@ -51,9 +49,11 @@ public class Plans {
     @Column(name = "place", length = 255)
     private String place;
 
+    @Builder.Default
     @Column(name = "is_completed", nullable = false)
     private boolean isCompleted = false;
 
+    @Builder.Default
     @Column(name = "has_savings_goal", nullable = false)
     private boolean hasSavingsGoal = false;
 
@@ -64,6 +64,7 @@ public class Plans {
     @Column(name = "privacy_level", nullable = false, length = 255)
     private String privacyLevel = "PUBLIC";
 
+    @Builder.Default
     @Column(name = "comment_count")
     private Integer commentCount = 0;
 
@@ -79,36 +80,43 @@ public class Plans {
     private LocalDateTime deletedAt;
 
     /** Plans(1) ↔ PlanPhotos(N) */
-    @OneToMany(mappedBy = "plan",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlanPhotos> photos = new ArrayList<>();
 
-    /** Plans(1) ↔ PlanParticipants(N) */
-    @OneToMany(mappedBy = "plan",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlanParticipants> participants = new ArrayList<>();
 
     /** Plans(1) ↔ Comments(N) */
-    @OneToMany(mappedBy = "plan",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comments> comments = new ArrayList<>();
 
-    // 내부 전용 (Users와의 양방향 연결 보조)
+    // privacyLevel은 서비스에서 확실히 세팅하니 기본값을 두지 않거나, 둔다면 Builder.Default로
+    // @Builder.Default
+    // private String privacyLevel = "PERSONAL_PUBLIC";
+
+    // ===================== 연관관계/도메인 메서드 =====================
+
+    // Users와의 양방향 연결 보조
     void setUserInternal(User user) { this.user = user; }
 
-    // 내부 전용 편의 메서드
-    void addPhoto(PlanPhotos photo) {
-        photos.add(photo);
-        if (photo.getPlan() != this) photo.setPlanInternal(this);
+    // 사진 추가 (PlanPhotos 생성과 연관관계 세팅을 한 곳에서)
+    public void addPhoto(String url, Integer order, Integer width, Integer height) {
+        PlanPhotos photo = PlanPhotos.of(url, order, width, height);
+        photo.setPlanInternal(this); // 같은 패키지에서만 접근
+        this.photos.add(photo);
     }
 
+    // 대표 이미지 지정
+    public void changeThumbnailTo(String url) { this.imageUrl = url; }
+
+    // 참가자 추가 (중복 방지 + 역방향 세팅)
     public void addParticipant(PlanParticipants pp) {
-        // 중복 방지
         if (!participants.contains(pp)) {
             participants.add(pp);
+            if (pp.getPlan() != this) pp.setPlanInternal(this);
         }
     }
 
@@ -117,6 +125,7 @@ public class Plans {
         if (c.getPlan() != this) c.setPlanInternal(this);
     }
 
+    // ===================== 비즈니스 로직 =====================
 
     public void applyUpdate(DetailPlanUpdateRequest req, LocalDateTime now) {
         if (req.title()        != null) this.title = req.title();
@@ -140,7 +149,6 @@ public class Plans {
         }
 
         if (req.privacyLevel() != null) this.privacyLevel = req.privacyLevel();
-
         this.updatedAt = now;
     }
 
@@ -148,9 +156,7 @@ public class Plans {
         commentCount = (commentCount == null ? 1 : commentCount + 1);
     }
 
-    public boolean isDeleted() {
-        return this.deletedAt != null;
-    }
+    public boolean isDeleted() { return this.deletedAt != null; }
 
     public void softDelete(LocalDateTime now) {
         if (this.deletedAt == null) {
@@ -158,6 +164,21 @@ public class Plans {
             this.updatedAt = now;
         }
     }
+
+    @OneToOne(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private PlanSeries planSeries;
+
+    public PlanSeries getPlanSeries() {
+        return planSeries;
+    }
+
+    public void setPlanSeries(PlanSeries planSeries) {
+        this.planSeries = planSeries;
+        if (planSeries != null && planSeries.getPlan() != this) {
+            planSeries.attachToPlan(this);
+        }
+    }
+
 
 
 }

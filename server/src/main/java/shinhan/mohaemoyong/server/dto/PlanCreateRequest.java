@@ -14,7 +14,9 @@ public record PlanCreateRequest(
         @NotBlank String title,
         String content,
         String place,
-        String imageUrl,
+
+        // ✅ 여러 장 사진 지원
+        List<@NotBlank String> photoUrls,
 
         @NotNull LocalDateTime startTime,
         @NotNull LocalDateTime endTime,

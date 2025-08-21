@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.domain.User;
+import shinhan.mohaemoyong.server.dto.OccurrencePatchRequest;
 import shinhan.mohaemoyong.server.dto.PlanCreateRequest;
 import shinhan.mohaemoyong.server.dto.PlanCreateResponse;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
@@ -29,9 +30,31 @@ public class PlanController {
             @AuthenticationPrincipal UserPrincipal user,   // ✅ User → UserPrincipal
             @Valid @RequestBody PlanCreateRequest request) {
 
-        Long creatorId = user.getId();   // 이제 오류 없이 동작
+        Long creatorId = user.getId();
         PlanCreateResponse response = planService.createPlan(creatorId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    // controller/PlanController.java (엔드포인트 예시)
+    @PatchMapping("/{planId}/occurrence")
+    public ResponseEntity<Void> patchOccurrence(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable Long planId,
+            @RequestBody OccurrencePatchRequest req
+    ) {
+        planService.patchOccurrence(user.getId(), planId, req);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{planId}/occurrence")
+    public ResponseEntity<Void> deleteOccurrence(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable Long planId,
+            @RequestBody OccurrencePatchRequest req // scope + occurrenceDate 만 사용
+    ) {
+        planService.deleteOccurrence(user.getId(), planId, req);
+        return ResponseEntity.noContent().build();
+    }
+
 }

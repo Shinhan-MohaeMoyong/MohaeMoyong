@@ -25,7 +25,7 @@ public class HomeController {
 
     // GET /api/v1/home/plans/myPlans
     // 내 모든 일정 조회
-    @GetMapping("/plans/my")
+    @GetMapping("/plans/myPlans")
     public List<HomeWeekResponse> getAllPlans(@CurrentUser UserPrincipal userPrincipal) {
         return homeService.getAllPlans(userPrincipal.getId());
     }

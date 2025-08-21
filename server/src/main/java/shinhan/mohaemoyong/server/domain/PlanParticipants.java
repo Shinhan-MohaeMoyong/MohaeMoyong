@@ -13,7 +13,10 @@ import java.time.Instant;
 @Table(
         name = "plan_participants",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_plan_participants_plan_user", columnNames = {"plan_id", "id"})
+                @UniqueConstraint(
+                        name = "uk_plan_participants_plan_user",
+                        columnNames = {"plan_id", "user_id"} // ✅ 수정
+                )
         }
 )
 @Getter
@@ -24,16 +27,16 @@ public class PlanParticipants {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "participant_id") // 실제 테이블에 추가되는 PK 컬럼
+    @Column(name = "participant_id")
     private Long participantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private Plans plan;
 
-    // users.id 컬럼명이 'id'
+    // ✅ FK 컬럼명 수정
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "role", nullable = false, length = 255)
@@ -47,7 +50,6 @@ public class PlanParticipants {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    // 내부 전용
     void setPlanInternal(Plans plan) { this.plan = plan; }
     void setUserInternal(User user) { this.user = user; }
 }

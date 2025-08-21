@@ -1,3 +1,4 @@
+// PlanCreateResponse.java
 package shinhan.mohaemoyong.server.dto;
 
 import java.time.LocalDateTime;
@@ -13,8 +14,8 @@ public record PlanCreateResponse(
         PrivacyLevel privacyLevel,
         Boolean hasSavingsGoal,
         Integer savingsAmount,
-        String imageUrl,
+        String imageUrl,               // ✅ 대표 사진(썸네일)
+        List<String> photos,           // ✅ 여러 장 URL
         List<Long> participantIds,
-        List<String> photos,           // ✅ 여러 장 사진 지원
-        RecurrenceCreateReq recurrence // ✅ 반복 정보
+        RecurrenceCreateReq recurrence
 ) {}

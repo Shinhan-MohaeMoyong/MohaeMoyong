@@ -5,16 +5,22 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.domain.FriendLastSeen;
+import shinhan.mohaemoyong.server.domain.PlanOverride;
+import shinhan.mohaemoyong.server.domain.PlanSeries;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.dto.FriendPlanDto;
 import shinhan.mohaemoyong.server.dto.FriendWeeklyPlanDto;
+import shinhan.mohaemoyong.server.dto.OccurrenceDto;
 import shinhan.mohaemoyong.server.repository.FriendLastSeenRepository;
 import shinhan.mohaemoyong.server.repository.FriendshipRepository;
+import shinhan.mohaemoyong.server.repository.PlanOverrideRepository;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
 
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,8 @@ public class FriendPlanService {
     private final PlanRepository planRepository;
     private final FriendLastSeenRepository lastSeenRepository;
     private final FriendshipRepository friendshipRepository;
+    private final PlanOverrideRepository planOverrideRepository;
+
 
     // 공통 친구 검증
     private void ensureFriendship(Long viewerId, Long friendId) {
@@ -80,28 +88,77 @@ public class FriendPlanService {
         ZoneId zone = ZoneId.of("Asia/Seoul");
         LocalDate today = LocalDate.now(zone);
 
-        // 🔥 오늘 ~ +7일 범위
-        LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end   = today.plusDays(7).atTime(LocalTime.MAX);
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
 
-        List<Plans> plans = planRepository.findRecentPublicPlansWithinRange(friendId, start, end);
+        LocalDateTime startOfWeek = monday.atStartOfDay();
+        LocalDateTime endOfWeek   = sunday.atTime(LocalTime.MAX);
 
+        // 1. 친구 일정 (Plan + Series)
+        List<Plans> friendPlans = planRepository.findFriendPlansWithinRange(friendId, startOfWeek, endOfWeek);
+
+        // 2. 오버라이드 조회
+        List<Long> seriesIds = friendPlans.stream()
+                .map(Plans::getPlanSeries)
+                .filter(Objects::nonNull)
+                .map(PlanSeries::getSeriesId)
+                .toList();
+
+        Map<Long, List<PlanOverride>> overridesBySeries = seriesIds.isEmpty()
+                ? Collections.emptyMap()
+                : planOverrideRepository.findBySeriesIdsInRange(seriesIds, startOfWeek.toLocalDate(), endOfWeek.toLocalDate())
+                .stream().collect(Collectors.groupingBy(o -> o.getSeries().getSeriesId()));
+
+        // 3. lastSeen 체크
         FriendLastSeen lastSeen = lastSeenRepository
                 .findByUserIdAndFriendId(userId, friendId)
                 .orElse(new FriendLastSeen(userId, friendId, LocalDateTime.MIN));
 
-        List<FriendWeeklyPlanDto> result = plans.stream()
-                .map(p -> FriendWeeklyPlanDto.builder()
-                        .planId(p.getPlanId())
-                        .title(p.getTitle())
-                        .place(p.getPlace())
-                        .startTime(p.getStartTime())
-                        .endTime(p.getEndTime())
-                        .isNew(p.getCreatedAt().isAfter(lastSeen.getLastSeenAt()))
-                        .build())
+        // 4. occurrence 확장 + override 적용
+        List<FriendWeeklyPlanDto> result = friendPlans.stream()
+                .flatMap(plan -> {
+                    if (plan.getPlanSeries() != null && plan.getPlanSeries().getEnabled()) {
+                        List<OccurrenceDto> occs = plan.getPlanSeries().expandOccurrences(startOfWeek, endOfWeek);
+                        List<PlanOverride> overrides = overridesBySeries.getOrDefault(plan.getPlanSeries().getSeriesId(), List.of());
+                        Map<LocalDate, PlanOverride> byDate = overrides.stream()
+                                .collect(Collectors.toMap(PlanOverride::getOccurrenceDate, o -> o));
+
+                        return occs.stream()
+                                .filter(occ -> {
+                                    PlanOverride ovr = byDate.get(occ.startTime().toLocalDate());
+                                    return ovr == null || !ovr.isCancelled();
+                                })
+                                .map(occ -> {
+                                    PlanOverride ovr = byDate.get(occ.startTime().toLocalDate());
+                                    LocalDateTime start = ovr != null && ovr.getStartTime() != null ? ovr.getStartTime() : occ.startTime();
+                                    LocalDateTime end   = ovr != null && ovr.getEndTime() != null ? ovr.getEndTime() : occ.endTime();
+                                    String title       = ovr != null && ovr.getTitle() != null ? ovr.getTitle() : occ.title();
+                                    String place       = ovr != null && ovr.getPlace() != null ? ovr.getPlace() : occ.place();
+
+                                    return FriendWeeklyPlanDto.builder()
+                                            .planId(plan.getPlanId())
+                                            .title(title)
+                                            .place(place)
+                                            .startTime(start)
+                                            .endTime(end)
+                                            .isNew(plan.getCreatedAt().isAfter(lastSeen.getLastSeenAt()))
+                                            .build();
+                                });
+                    } else {
+                        return Stream.of(FriendWeeklyPlanDto.builder()
+                                .planId(plan.getPlanId())
+                                .title(plan.getTitle())
+                                .place(plan.getPlace())
+                                .startTime(plan.getStartTime())
+                                .endTime(plan.getEndTime())
+                                .isNew(plan.getCreatedAt().isAfter(lastSeen.getLastSeenAt()))
+                                .build());
+                    }
+                })
+                .sorted(Comparator.comparing(FriendWeeklyPlanDto::getStartTime))
                 .toList();
 
-        // 🔥 조회 후 자동 seen 처리
+        // 5. 자동 seen 처리
         lastSeen.updateLastSeen(LocalDateTime.now());
         lastSeenRepository.save(lastSeen);
 
