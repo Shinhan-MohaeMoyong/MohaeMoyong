@@ -1,6 +1,7 @@
 package shinhan.mohaemoyong.server.oauth2.security.oauth2;
 
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
@@ -10,8 +11,11 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import shinhan.mohaemoyong.server.exception.OAuth2AuthenticationProcessingException;
+import shinhan.mohaemoyong.server.adapter.user.UserApiAdapter;
+import shinhan.mohaemoyong.server.adapter.user.dto.CreateMemberResponse;
+import shinhan.mohaemoyong.server.adapter.user.dto.SearchResponse;
 import shinhan.mohaemoyong.server.domain.User;
+import shinhan.mohaemoyong.server.exception.OAuth2AuthenticationProcessingException;
 import shinhan.mohaemoyong.server.oauth2.AuthProvider;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.oauth2.security.oauth2.user.OAuth2UserInfo;
@@ -20,11 +24,14 @@ import shinhan.mohaemoyong.server.repository.UserRepository;
 
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    private final UserApiAdapter userApiAdapter;
 
     //백엔드 리다이렉션 페이지에서 토큰을 받은 후 리소스에 다시 요청해서 유저 정보를 받아옴
     @Override
@@ -76,7 +83,32 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         /*
             userkey 설정
         */
-        user.setUserkey("test01");
+        try {
+            // 1) 생성 시도
+            CreateMemberResponse response = userApiAdapter.createMember(oAuth2UserInfo.getEmail());
+
+            user.setUserkey(response.getUserKey());
+
+
+        } catch (RuntimeException ex) {
+            // 2) 이미 존재(E4002)면 조회로 폴백
+            if ("E4002".equals(ex.getMessage())) {
+                SearchResponse existing = userApiAdapter.search(oAuth2UserInfo.getEmail()); // 조회 API
+                if (existing == null || !org.springframework.util.StringUtils.hasText(existing.getUserKey())) {
+                    throw new IllegalStateException("E4002인데 userKey 조회 실패: " + oAuth2UserInfo.getEmail());
+                    /*
+                    
+                    !!!!!!!!!!! 중복 이메일 예외처리 필요
+                    
+                    
+                     */
+                }
+                user.setUserkey(existing.getUserKey());
+            } else {
+                // 3) 다른 에러는 그대로 전파
+                throw ex;
+            }
+        }
 
         return userRepository.save(user);
     }
@@ -88,11 +120,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
         existingUser.setName(oAuth2UserInfo.getName());
         existingUser.setImageUrl(oAuth2UserInfo.getImageUrl());
-        
-        /*
-            재 로그인시 userkey 가 없다면 발급
-        */
-        
         return userRepository.save(existingUser);
     }
 
