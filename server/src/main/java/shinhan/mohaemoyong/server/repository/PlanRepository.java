@@ -111,4 +111,10 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
     int incrementCommentCount(@Param("planId") Long planId);
 
     Long user(User user);
+
+    /* 하루 단위 일정 조회 */
+    @Query("SELECT p FROM Plans p JOIN FETCH p.user WHERE p.startTime <= :endOfDay AND p.endTime >= :startOfDay AND p.deletedAt IS NULL")
+    List<Plans> findPlansByDateRangeWithUser(
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay);
 }
