@@ -2,13 +2,11 @@ package shinhan.mohaemoyong.server.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import shinhan.mohaemoyong.server.domain.Plans;
-import shinhan.mohaemoyong.server.domain.User;
-
 import java.time.Instant;
 
 @Entity
@@ -21,6 +19,7 @@ import java.time.Instant;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class PlanParticipants {
 
     @Id

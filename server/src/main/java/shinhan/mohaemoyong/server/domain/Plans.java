@@ -2,6 +2,7 @@ package shinhan.mohaemoyong.server.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,6 +17,7 @@ import java.util.List;
 @Entity
 @Table(name = "plans")
 @Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Plans {
@@ -102,10 +104,14 @@ public class Plans {
         photos.add(photo);
         if (photo.getPlan() != this) photo.setPlanInternal(this);
     }
-    void addParticipant(PlanParticipants pp) {
-        participants.add(pp);
-        if (pp.getPlan() != this) pp.setPlanInternal(this);
+
+    public void addParticipant(PlanParticipants pp) {
+        // 중복 방지
+        if (!participants.contains(pp)) {
+            participants.add(pp);
+        }
     }
+
     void addComment(Comments c) {
         comments.add(c);
         if (c.getPlan() != this) c.setPlanInternal(this);
@@ -152,4 +158,6 @@ public class Plans {
             this.updatedAt = now;
         }
     }
+
+
 }
