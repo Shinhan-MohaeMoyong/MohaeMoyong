@@ -40,7 +40,7 @@ public class DemandDepositApiAdapter {
     public CreateDemandDepositResponse createDemandDeposit(String bankCode, String accountName, String accountDescription) {
         // 1. API 요청을 위한 URL 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/createDemandDeposit";
-        
+
         // HeaderFactory를 사용하여 공통 헤더를 생성합니다. (userKey 제외)
         RequestHeader header = headerFactory.createHeader("createDemandDeposit");
 
@@ -184,7 +184,7 @@ public class DemandDepositApiAdapter {
      * @return 조회된 계좌 목록 정보가 담긴 DTO
      */
     public InquireDemandDepositAccountListResponse inquireDemandDepositAccountList(String userKey) {
-        // 1. API 요청을 위한 URL과 Body를 준비합니다. [cite: 1]
+        // 1. API 요청을 위한 URL과 Body를 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccountList";
 
         // 이 API는 userKey를 포함하므로, 파라미터가 2개인 createHeader 메서드를 사용합니다.
