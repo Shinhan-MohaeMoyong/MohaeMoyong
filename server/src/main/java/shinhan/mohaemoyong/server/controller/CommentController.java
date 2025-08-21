@@ -1,5 +1,6 @@
 package shinhan.mohaemoyong.server.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.CommentCountResponse;
 import shinhan.mohaemoyong.server.dto.CommentListItemDto;
 import shinhan.mohaemoyong.server.dto.CreateCommentRequest;
+import shinhan.mohaemoyong.server.dto.UpdateCommentRequest;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.CommentCommandService;
@@ -45,12 +47,21 @@ public class CommentController {
 
     }
 
-
     @PostMapping
-    public ResponseEntity<Void> createComment(@PathVariable Long planId,
+    public ResponseEntity<Void> createComment (@PathVariable Long planId,
                                               @CurrentUser UserPrincipal me,
-                                              @RequestBody CreateCommentRequest req) {
+                                              @RequestBody @Valid CreateCommentRequest req) {
         commentCommandService.createComment(planId, me, req);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<Void> updateComment(@PathVariable Long planId,
+                                              @PathVariable Long commentId,
+                                              @CurrentUser UserPrincipal me,
+                                              @RequestBody @Valid UpdateCommentRequest req) {
+        commentCommandService.updateComment(planId, commentId, me, req);
         return ResponseEntity.noContent().build();
     }
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import shinhan.mohaemoyong.server.domain.Plans;
+import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.FriendPlanDto;
 import shinhan.mohaemoyong.server.dto.HomeWeekResponse;
 
@@ -109,4 +110,11 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
     @Query("update Plans p set p.commentCount = coalesce(p.commentCount,0) + 1 where p.planId = :planId")
     int incrementCommentCount(@Param("planId") Long planId);
 
+    Long user(User user);
+
+    /* 하루 단위 일정 조회 */
+    @Query("SELECT p FROM Plans p JOIN FETCH p.user WHERE p.startTime <= :endOfDay AND p.endTime >= :startOfDay AND p.deletedAt IS NULL")
+    List<Plans> findPlansByDateRangeWithUser(
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay);
 }

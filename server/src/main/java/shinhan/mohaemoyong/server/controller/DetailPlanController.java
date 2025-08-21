@@ -22,8 +22,7 @@ public class DetailPlanController {
             @CurrentUser UserPrincipal userPrincipal,
             @PathVariable Long planId
     ) {
-        Long loginUserId = userPrincipal.getId();
-        return ResponseEntity.ok(detailPlanService.getDetail(loginUserId, planId));
+        return ResponseEntity.ok(detailPlanService.getDetail(userPrincipal, planId));
     }
 
     // PATCH /api/v1/plans/{planId}
@@ -33,8 +32,7 @@ public class DetailPlanController {
             @PathVariable Long planId,
             @RequestBody DetailPlanUpdateRequest request
     ) {
-        Long loginUserId = userPrincipal.getId();
-        return ResponseEntity.ok(detailPlanService.update(loginUserId, planId, request));
+        return ResponseEntity.ok(detailPlanService.update(userPrincipal, planId, request));
     }
 
     // DELETE /api/v1/plans/{planId}
@@ -43,8 +41,7 @@ public class DetailPlanController {
             @CurrentUser UserPrincipal userPrincipal,
             @PathVariable Long planId
     ) {
-        Long loginUserId = userPrincipal.getId();
-        detailPlanService.delete(loginUserId, planId);
+        detailPlanService.delete(userPrincipal, planId);
         return ResponseEntity.noContent().build();
     }
 }

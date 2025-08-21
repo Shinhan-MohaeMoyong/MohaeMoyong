@@ -75,6 +75,10 @@ public class Comments {
                 .build();
     }
 
+    public void updateContent(String newContent) {
+        this.content = newContent;
+    }
+
     // 단건 추가
     public Comments addPhoto(String url, Integer orderNo) {
         CommentPhotos p = CommentPhotos.create(url, orderNo);
