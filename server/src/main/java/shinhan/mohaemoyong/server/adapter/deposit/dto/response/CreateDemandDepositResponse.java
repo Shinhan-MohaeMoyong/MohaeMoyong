@@ -1,11 +1,9 @@
-package shinhan.mohaemoyong.server.adapter.deposit.dto;
+package shinhan.mohaemoyong.server.adapter.deposit.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import shinhan.mohaemoyong.server.adapter.common.headerDto.ResponseHeader;
-
-import java.util.List;
 
 // 전체 응답을 감싸는 클래스
 @Getter
