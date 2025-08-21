@@ -72,12 +72,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setName(oAuth2UserInfo.getName());
         user.setEmail(oAuth2UserInfo.getEmail());
         user.setImageUrl(oAuth2UserInfo.getImageUrl());
+
+        /*
+            userkey 설정
+        */
+        user.setUserkey("test01");
+
         return userRepository.save(user);
     }
 
+    /*
+        카카오 계정 이름 변경시 재로그인때 반영
+        카카오 계정 프로필사진 변경시 재로그인때 반영
+     */
     private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
         existingUser.setName(oAuth2UserInfo.getName());
         existingUser.setImageUrl(oAuth2UserInfo.getImageUrl());
+        
+        /*
+            재 로그인시 userkey 가 없다면 발급
+        */
+        
         return userRepository.save(existingUser);
     }
 
