@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.service.dto;
+package shinhan.mohaemoyong.server.service.financedto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
