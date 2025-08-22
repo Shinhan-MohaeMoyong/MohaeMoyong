@@ -17,6 +17,8 @@ public class SimpleAccountListResponse {
                 .accountBalance(record.getAccountBalance())
                 .accountName(record.getAccountName())
                 .build();
+
+
     }
 
 }
