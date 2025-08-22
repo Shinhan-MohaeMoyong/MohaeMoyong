@@ -5,9 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.InquireDemandDepositAccountListResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.InquireTransactionHistoryListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
 import java.util.List;

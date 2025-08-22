@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.deposit.dto;
+package shinhan.mohaemoyong.server.adapter.deposit.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

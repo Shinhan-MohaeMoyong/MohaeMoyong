@@ -4,9 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.*;
+import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.request.*;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.*;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
 

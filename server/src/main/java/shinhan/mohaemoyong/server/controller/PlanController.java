@@ -2,22 +2,15 @@ package shinhan.mohaemoyong.server.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.domain.User;
-import shinhan.mohaemoyong.server.dto.DetailPlanResponse;
-import shinhan.mohaemoyong.server.dto.PlanByDateRequest;
 import shinhan.mohaemoyong.server.dto.PlanCreateRequest;
 import shinhan.mohaemoyong.server.dto.PlanCreateResponse;
-import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.PlanService;
-
-import java.time.LocalDate;
-import java.util.List;
 
 // ✅ 일정 관련 API 컨트롤러
 @RestController
@@ -40,14 +33,5 @@ public class PlanController {
         PlanCreateResponse response = planService.createPlan(creatorId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/{date}/myPlans")
-    public ResponseEntity<List<DetailPlanResponse>> getPlansByDate(
-            @CurrentUser UserPrincipal userPrincipal,
-            @PathVariable @DateTimeFormat(pattern = "yyyyMMdd") LocalDate date){
-
-        List<DetailPlanResponse> plans = planService.selectPlansByDate(date);
-        return ResponseEntity.ok(plans);
     }
 }

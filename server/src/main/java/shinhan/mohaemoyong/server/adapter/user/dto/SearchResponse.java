@@ -12,4 +12,8 @@ public class SearchResponse {
     private String userKey;
     private String created;
     private String modified;
+
+    public SearchResponse(String userkey) {
+        this.userKey = userkey;
+    }
 }
