@@ -2,6 +2,7 @@ package shinhan.mohaemoyong.server.adapter.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,8 +12,11 @@ import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.adapter.exception.ExceptionResponseDto;
 import shinhan.mohaemoyong.server.adapter.user.dto.*;
 
+import java.util.Optional;
+
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class UserApiAdapter {
     private final RestTemplate restTemplate;
 
@@ -23,10 +27,7 @@ public class UserApiAdapter {
     @Value("${api.shinhan.api-key}")
     private String apiKey;
 
-    // 생성자를 통해 RestTemplate Bean을 주입받습니다.
-    public UserApiAdapter(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+
 
 
     /**
@@ -67,7 +68,6 @@ public class UserApiAdapter {
     public CreateMemberResponse createMember(String userId) {
         String url = baseUrl + "/ssafy/api/v1/member/";
         CreateMemberRequest requestBody = new CreateMemberRequest(apiKey, userId);
-
         try {
             CreateMemberResponse resp = restTemplate.postForObject(url, requestBody, CreateMemberResponse.class);
             if (resp == null) throw new RuntimeException("API 응답이 비어있습니다.");
@@ -84,7 +84,7 @@ public class UserApiAdapter {
                 String body = payload.getErrorCode();
                 // if (body.equals("E4002")) { (카카오측에서 이외엔 다 잡아주고 반환한 결과를 활용하므로 일단 에러 하나로 고정이라 조건문 삭제)
 
-                    // 호출부에서 처리하도록 전용 예외 던지기
+                    // 호출부에서 처리하도록 전용 예외 던지기 (throw new 는 시큐리티가 감지해버려서 리턴해야하지만 일단은 이 예외가 발생할 일이 없으므로 그대로 둠)
                     throw new ApiErrorException("E4002", "이미 해당 이메일로 등록된 사용자입니다.");
                 // }
             } catch (JsonProcessingException e1) {
@@ -106,7 +106,7 @@ public class UserApiAdapter {
      * @return 조회된 사용자 정보 DTO
      * @throws RuntimeException API 호출 실패 시 발생
      */
-    public SearchResponse search(String userId) {
+    public Optional<SearchResponse> search(String userId) {
         // 1. API 요청을 위한 URL과 Body를 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/member/search";
         SearchRequest requestBody = new SearchRequest(userId, apiKey);
@@ -123,28 +123,18 @@ public class UserApiAdapter {
             }
 
             log.info("신한은행 API 응답 성공: {}", response.getUserId());
-            return response;
+            return Optional.of(response);
 
         } catch (HttpClientErrorException e) {// 최초에 잡는건 클라이언트 에러 코드, 존재하지 않는 ID입니다 관련 (E4003 전용 예외 처리)
-            String errorBody = e.getResponseBodyAsString();
 
-            // 2. ObjectMapper를 사용해 JSON을 파싱합니다.
-            ObjectMapper objectMapper = new ObjectMapper();
 
-            try {
-                ExceptionResponseDto payload = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
+                //if (code.equals("E4003")) { // 해당 이메일로 가입이 안되어있는 경우 (추가적인 어떤 예외처리가 없는 이유 : 카카오측에서 이외엔 다 잡아주고 반환한 결과를 활용하므로 일단 에러 하나로 고정이라 조건문 삭제)
 
-                String code = payload.getErrorCode();
-
-                //if (code.equals("E4003")) { // 해당 이메일로 가입이 안되어있는 경우 (카카오측에서 이외엔 다 잡아주고 반환한 결과를 활용하므로 일단 에러 하나로 고정이라 조건문 삭제)
-
-                    // 호출부에서 처리하도록 전용 예외 던지기
-                    throw new ApiErrorException("E4003", "존재하지 않는 ID입니다."); // 사용자 정의 에러클래스
+                    // 호출부에서 처리하도록 전용 예외 던지기 (throw new 는 시큐리티가 감지해버리기에 리턴)
+                    return Optional.empty();
+                    // throw new ApiErrorException("E4003", "존재하지 않는 ID입니다."); // 사용자 정의 에러클래스
                 //}
-            }  catch (JsonProcessingException jsonEx) {
-                // 바디가 JSON이 아니거나 파싱 실패 시 → 원본 예외 그대로 던짐
-                throw e;
-            }
+
         }
         catch (Exception e) {
             // 3. API가 4xx 에러(E4003, E4004 등)를 반환했을 때 예외를 처리합니다. [cite: 1]

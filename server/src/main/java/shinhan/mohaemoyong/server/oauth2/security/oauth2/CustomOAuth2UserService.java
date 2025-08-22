@@ -3,7 +3,6 @@ package shinhan.mohaemoyong.server.oauth2.security.oauth2;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -12,12 +11,10 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
 import shinhan.mohaemoyong.server.adapter.user.UserApiAdapter;
 import shinhan.mohaemoyong.server.adapter.user.dto.CreateMemberResponse;
 import shinhan.mohaemoyong.server.adapter.user.dto.SearchResponse;
 import shinhan.mohaemoyong.server.domain.User;
-import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.exception.OAuth2AuthenticationProcessingException;
 import shinhan.mohaemoyong.server.oauth2.AuthProvider;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
@@ -26,7 +23,6 @@ import shinhan.mohaemoyong.server.oauth2.security.oauth2.user.OAuth2UserInfoFact
 import shinhan.mohaemoyong.server.repository.UserRepository;
 
 import java.util.Optional;
-
 @RequiredArgsConstructor
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -71,41 +67,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Optional<User> userOptional = userRepository.findByEmail(oAuth2UserInfo.getEmail()); // 엔티티 꺼내고 null일수 있으니 옵셔널
         User user;
 
+
+        /*
+            금융망
+        */
+        // 금융망 계정 조회 api를 호출하여 userkey를 받을 수 있는지 체크
+        Optional<SearchResponse> searchResponseOptional = userApiAdapter.search(oAuth2UserInfo.getEmail());
+
         String userkey;
-
-        try { // 금융망 계정 조회 api를 호출하여 userkey를 받을 수 있는지 체크
-
-            SearchResponse response = userApiAdapter.search(oAuth2UserInfo.getEmail());
-            userkey = response.getUserKey();
-
-        } catch (ApiErrorException ex) {
-
-            if ("E4003".equals(ex.getErrorCode())) { // 없다면 : 금융망 계정 생성 API를 통해 userkey 받음
-
-                try {
-                    // 1) 생성 시도
-                    CreateMemberResponse response = userApiAdapter.createMember(oAuth2UserInfo.getEmail());
-                    userkey = response.getUserKey();
-
-                } catch (ApiErrorException ex2) { // 이메일 중복 관련 이므로 현재는 무시 가능
-                    // 2) 이미 존재된 email이면 (E4002)
-                    if ("E4002".equals(ex2.getErrorCode())) {
-                        //이미 등록된 이메일 : 이메일이 중복이라고 예외를 프런트에 응답
-                        throw new ResponseStatusException( // 커스텀바디 X
-                                HttpStatus.CONFLICT, // 409
-                                ex.getErrorCode() + " : " + ex.getErrorMessage()
-                        );
-
-                    } else {
-                        // 다른 에러는 일단은 그대로 전파
-                        throw ex2;
-                    }
-                }
-            } else {
-                // 다른 에러는 일단은 그대로 전파
-                throw ex;
-            }
+        if (searchResponseOptional.isPresent()) {
+            // 2-1. 결과가 있다면(존재하는 사용자): userKey를 꺼내서 사용
+            userkey = searchResponseOptional.get().getUserKey();
+        } else {
+            // 2-2. 결과가 없다면(E4003 에러): 신규 사용자이므로 계정 생성 로직을 실행
+            CreateMemberResponse createResponse = userApiAdapter.createMember(oAuth2UserInfo.getEmail());
+            userkey = createResponse.getUserKey();
         }
+
+        //===========================================================================================================
+
+        /*
+            OAuth2
+         */
 
         if(userOptional.isPresent()) { // 이미 등록된 사용자다
             user = userOptional.get();
@@ -114,7 +97,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         user.getProvider() + " account. Please use your " + user.getProvider() +
                         " account to login.");
             }
+
             user = updateExistingUser(user, oAuth2UserInfo, userkey);
+
         } else { // 이미 등록된 사용자가 아니다
             user = registerNewUser(oAuth2UserRequest, oAuth2UserInfo, userkey);
         }
