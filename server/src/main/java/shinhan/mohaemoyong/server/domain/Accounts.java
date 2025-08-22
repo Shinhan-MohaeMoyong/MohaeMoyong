@@ -45,6 +45,9 @@ public class Accounts {
     @Column(name = "account_expiry_date")
     private LocalDate accountExpiryDate;
 
+    @Column(name = "target_amount")
+    private Long targetAmount; // ✨ 목표 금액 필드 추가, 달성률을 나타내기 위함, 조현우
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

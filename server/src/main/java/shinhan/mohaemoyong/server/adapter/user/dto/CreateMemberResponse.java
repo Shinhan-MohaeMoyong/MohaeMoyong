@@ -12,4 +12,6 @@ public class CreateMemberResponse {
     private String userKey;
     private String created;
     private String modified;
+
+
 }

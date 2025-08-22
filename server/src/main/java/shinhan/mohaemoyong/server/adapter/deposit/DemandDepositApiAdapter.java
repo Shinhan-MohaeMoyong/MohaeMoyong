@@ -4,9 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.*;
+import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.request.*;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.*;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
 
@@ -40,7 +41,7 @@ public class DemandDepositApiAdapter {
     public CreateDemandDepositResponse createDemandDeposit(String bankCode, String accountName, String accountDescription) {
         // 1. API 요청을 위한 URL 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/createDemandDeposit";
-        
+
         // HeaderFactory를 사용하여 공통 헤더를 생성합니다. (userKey 제외)
         RequestHeader header = headerFactory.createHeader("createDemandDeposit");
 
@@ -184,7 +185,7 @@ public class DemandDepositApiAdapter {
      * @return 조회된 계좌 목록 정보가 담긴 DTO
      */
     public InquireDemandDepositAccountListResponse inquireDemandDepositAccountList(String userKey) {
-        // 1. API 요청을 위한 URL과 Body를 준비합니다. [cite: 1]
+        // 1. API 요청을 위한 URL과 Body를 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccountList";
 
         // 이 API는 userKey를 포함하므로, 파라미터가 2개인 createHeader 메서드를 사용합니다.

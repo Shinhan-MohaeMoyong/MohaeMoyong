@@ -5,10 +5,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
 import org.springframework.web.servlet.HandlerMapping;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositAccountResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.CreateDemandDepositResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.InquireDemandDepositListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositAccountResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
+import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
 import java.util.List;
 
@@ -69,7 +74,7 @@ class DemandDepositApiAdapterTest {
 
     @Test
     @DisplayName("수시입출금_계좌생성_API_호출_테스트")
-    void 수시입출금_계좌생성_API_호출_테스트(){
+    void 수시입출금_계좌생성_API_호출_테스트() {
         // 계좌 생성을 위해 상품번호가 필요함. 상품조회 메서드 호출 후 사용자가 상품을 선택하게 해서 accountTypeUniqueNo 결정
         InquireDemandDepositListResponse response = demandDepositApiAdapter.inquireDemandDepositList();
 
@@ -89,5 +94,69 @@ class DemandDepositApiAdapterTest {
             String userKey = "c50e9509-6583-45ba-9ed7-21e53e06be57";
             CreateDemandDepositAccountResponse createDemandDepositResponse = demandDepositApiAdapter.createDemandDepositAccount(userKey, accountTypeUniqueNo);
         }
+    }
+
+    @Test
+    @DisplayName("수시입출금 계좌 목록 조회 API 호출 테스트") // 테스트에 한글 이름 붙이기
+    void 수시입출금_계좌_목록_조회_API_호출_테스트() {
+        // given - 테스트에 필요한 값들을 하드코딩으로 준비
+        String userKey = "c50e9509-6583-45ba-9ed7-21e53e06be57";
+
+        // when - 실제 어댑터 메서드 호출
+        InquireDemandDepositAccountListResponse response =  demandDepositApiAdapter.inquireDemandDepositAccountList(userKey);
+
+        // then - 결과 검증 및 로그 출력
+        log.info("응답 코드: {}", response.getHeader().getResponseCode());
+
+        // 계좌목록 출력
+            List<InquireDemandDepositAccountListResponse.Record> records = response.getREC();
+
+        if (records != null) {
+            records.stream().map(record -> record.getAccountName())
+            .forEach(accountname -> log.info("계좌이름 : {}", accountname));
+        }
+
+
+        // 응답 객체가 null이 아닌지 간단히 검증
+        assertNotNull(response);
+        assertNotNull(response.getHeader());
+    }
+
+    @Test
+    @DisplayName("수시입출금 계좌거래내역조회 API 호출 테스트") // 테스트에 한글 이름 붙이기
+    void 수시입출금_계좌거래내역조회_API_호출_테스트() {
+        // given - 테스트에 필요한 값들을 DTO로 준비
+        String userKey = "c50e9509-6583-45ba-9ed7-21e53e06be57";
+
+        // 예시 DTO 생성
+        InquireTransactionHistoryListRequestDto requestDto = new InquireTransactionHistoryListRequestDto(
+                "0017140134561303", // 조회할 계좌번호
+                "20250721",         // 조회 시작일
+                "20250820",         // 조회 종료일
+                "A",                // 거래 구분 (전체)
+                "ASC"               // 정렬 순서 (오름차순)
+        );
+        
+
+        // when - 실제 어댑터 메서드 호출
+        InquireTransactionHistoryListResponse response =  demandDepositApiAdapter.inquireTransactionHistoryList(userKey, requestDto);
+
+            
+        // then - 결과 검증 및 로그 출력
+        log.info("응답 코드: {}", response.getHeader().getResponseCode());
+
+        // 계좌목록 출력
+        List<InquireTransactionHistoryListResponse.Transaction> records = response.getREC().getList();
+
+        log.info("총 거래 건수 : {}", response.getREC().getTotalCount());
+
+        if (records != null) {
+            records.stream().map(record -> record.getTransactionUniqueNo())
+                    .forEach(transactionuniqueNo -> log.info("거래고유번호 : {}", transactionuniqueNo));
+        }
+
+        // 응답 객체가 null이 아닌지 간단히 검증
+        assertNotNull(response);
+        assertNotNull(response.getHeader());
     }
 }

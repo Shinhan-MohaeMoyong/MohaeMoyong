@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.deposit.dto;
+package shinhan.mohaemoyong.server.adapter.deposit.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

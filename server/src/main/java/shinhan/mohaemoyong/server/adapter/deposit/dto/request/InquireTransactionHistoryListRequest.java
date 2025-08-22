@@ -1,4 +1,4 @@
-package shinhan.mohaemoyong.server.adapter.deposit.dto;
+package shinhan.mohaemoyong.server.adapter.deposit.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -9,8 +9,13 @@ import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 @Getter
 @AllArgsConstructor
 @ToString
-public class CreateDemandDepositAccountRequest {
+public class InquireTransactionHistoryListRequest {
     @JsonProperty("Header")
     private RequestHeader header;
-    private String accountTypeUniqueNo;
+
+    private String accountNo;
+    private String startDate;
+    private String endDate;
+    private String transactionType;
+    private String orderByType;
 }

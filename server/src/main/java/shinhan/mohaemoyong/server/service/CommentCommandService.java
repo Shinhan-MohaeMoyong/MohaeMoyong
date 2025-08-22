@@ -2,18 +2,28 @@ package shinhan.mohaemoyong.server.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import shinhan.mohaemoyong.server.domain.CommentPhotos;
 import shinhan.mohaemoyong.server.domain.Comments;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.CreateCommentRequest;
+import shinhan.mohaemoyong.server.dto.UpdateCommentRequest;
+import shinhan.mohaemoyong.server.exception.BadRequestException;
+import shinhan.mohaemoyong.server.exception.ResourceNotFoundException;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
+import shinhan.mohaemoyong.server.repository.CommentPhotoRepository;
 import shinhan.mohaemoyong.server.repository.CommentRepository;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -22,10 +32,12 @@ public class CommentCommandService {
     private final CommentRepository commentRepository;
     private final PlanRepository planRepository;
     private final UserRepository userRepository;
+    private final AccessControlService accessControlService;
+    private final CommentPhotoRepository commentPhotoRepository;
 
     @Transactional
-    public void createComment(Long planId, UserPrincipal me, CreateCommentRequest req) {
-        User user = userRepository.findById(me.getId())
+    public void createComment(Long planId, UserPrincipal userPrincipal, @Valid CreateCommentRequest req) {
+        User user = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         Plans plan = planRepository.findById(planId)
@@ -34,8 +46,62 @@ public class CommentCommandService {
         Comments comment = Comments.create(plan, user, req.content())
                 .addPhotos(req.photos());
 
+        // plan 접근 권한 설정
+        if (!accessControlService.canViewPlan(plan, userPrincipal)) {
+            throw new ResourceNotFoundException("Plans", "planId", planId);
+        }
+
         commentRepository.save(comment);
         planRepository.incrementCommentCount(planId);
+    }
+
+    @Transactional
+    public void updateComment(Long planId, Long commentId, UserPrincipal me, UpdateCommentRequest req) {
+        // 1) 댓글 로드 (soft delete 제외)
+        Comments comment = commentRepository
+                .findByCommentIdAndPlan_PlanIdAndDeletedAtIsNull(commentId, planId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
+
+        // 2) 권한 체크: 작성자만
+        if (!comment.getUser().getId().equals(me.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "댓글 수정 권한이 없습니다.");
+        }
+
+        // 3) 내용 수정 (null이면 무시)
+        if (req.getContent() != null) {
+            String newContent = req.getContent().trim();
+            if (newContent.isEmpty()) {
+                throw new BadRequestException("내용은 비어 있을 수 없습니다.");
+            }
+            comment.updateContent(newContent);
+        }
+
+        // 4) 이미지 추가 (urls 기준)
+        if (req.getAddImageUrls() != null && !req.getAddImageUrls().isEmpty()) {
+            int nextOrder = comment.getPhotos().stream()
+                    .map(CommentPhotos::getOrderNo)
+                    .filter(Objects::nonNull)
+                    .max(Integer::compareTo)
+                    .orElse(-1) + 1;
+
+            for (String url : req.getAddImageUrls()) {
+                comment.addPhoto(url, nextOrder++); // 내부에서 setCommentInternal + 컬렉션 추가
+            }
+        }
+
+        // 5) 이미지 삭제 (ID 기준) - 이 댓글의 컬렉션에서만 제거
+        if (req.getRemoveImageIds() != null && !req.getRemoveImageIds().isEmpty()) {
+            Set<Long> targets = new HashSet<>(req.getRemoveImageIds());
+            int before = comment.getPhotos().size();
+
+            comment.getPhotos().removeIf(p ->
+                    p.getCommentPhotoId() != null && targets.contains(p.getCommentPhotoId()));
+
+            // 요청 개수와 실제 삭제 개수 불일치 시 예외
+            if (before - comment.getPhotos().size() != targets.size()) {
+                throw new BadRequestException("삭제 대상 이미지 중 존재하지 않는 항목이 있습니다.");
+            }
+        }
     }
 
     @Transactional
