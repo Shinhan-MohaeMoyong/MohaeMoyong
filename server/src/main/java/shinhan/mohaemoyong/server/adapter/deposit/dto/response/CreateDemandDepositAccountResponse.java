@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import shinhan.mohaemoyong.server.adapter.common.headerDto.ResponseHeader;
+import shinhan.mohaemoyong.server.domain.Accounts;
+import shinhan.mohaemoyong.server.domain.User;
 
 @Getter
 @NoArgsConstructor
@@ -30,5 +32,15 @@ public class CreateDemandDepositAccountResponse {
         @JsonProperty("currency")
         private String currency;
         private String currencyName;
+    }
+
+    public Accounts toEntity(User userParam, String customAccountName) {
+        return Accounts.builder()
+                .user(userParam)
+                .username(userParam.getName()) // User 엔티티에서 사용자 실명 가져오기
+                .accountName(customAccountName) // 파라미터로 받은 계좌 별칭
+                .accountNumber(this.REC.getAccountNo()) // API 응답으로 받은 계좌번호
+                .bankCode(this.REC.getBankCode()) // API 응답으로 받은 은행 코드
+                .build();
     }
 }

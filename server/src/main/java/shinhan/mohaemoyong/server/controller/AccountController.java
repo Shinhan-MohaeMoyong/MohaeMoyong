@@ -42,9 +42,10 @@ public class AccountController {
 
     @PostMapping
     public ResponseEntity<?> createAccount (@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountCreateRequest request) {
-        String userkey = userPrincipal.getUserkey();
 
-        accountService.createAccount(userkey, request.getAccountName());
+        accountService.createAccount(userPrincipal, request);
+
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 }

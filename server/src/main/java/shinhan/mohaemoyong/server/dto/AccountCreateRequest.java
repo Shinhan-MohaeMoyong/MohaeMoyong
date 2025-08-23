@@ -7,4 +7,5 @@ import lombok.Getter;
 @Builder
 public class AccountCreateRequest {
     private String accountName;
+    private String accountTypeUniqueNo;
 }
