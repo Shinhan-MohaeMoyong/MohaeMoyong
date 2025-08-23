@@ -34,13 +34,15 @@ public class CreateDemandDepositAccountResponse {
         private String currencyName;
     }
 
-    public Accounts toEntity(User userParam, String customAccountName) {
+    public Accounts toEntity(User userParam, String customAccountName, Long customTargetAmount) {
         return Accounts.builder()
                 .user(userParam)
                 .username(userParam.getName()) // User 엔티티에서 사용자 실명 가져오기
                 .accountName(customAccountName) // 파라미터로 받은 계좌 별칭
                 .accountNumber(this.REC.getAccountNo()) // API 응답으로 받은 계좌번호
                 .bankCode(this.REC.getBankCode()) // API 응답으로 받은 은행 코드
+                .bankName("신한은행")
+                .targetAmount(customTargetAmount) // 파라미터로 받은 목표 저축금액
                 .build();
     }
 }
