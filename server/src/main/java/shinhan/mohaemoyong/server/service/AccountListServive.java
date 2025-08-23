@@ -5,10 +5,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
 import shinhan.mohaemoyong.server.domain.Accounts;
+import shinhan.mohaemoyong.server.dto.AccountDetailResponse;
 import shinhan.mohaemoyong.server.dto.SimpleAccountListResponse;
+import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.AccountRepository;
+import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -55,5 +61,32 @@ public class AccountListServive {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public AccountDetailResponse getAccountDetails(UserPrincipal userPrincipal, String accountNo) {
+        String userKey = userPrincipal.getUserkey();
+
+        // 1. 우리 DB에서 계좌 정보를 조회합니다.
+        Accounts account = accountRepository.findByAccountNumber(accountNo)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계좌번호입니다."));
+
+        // 2. 외부 API에 보낼 요청 DTO를 준비합니다.
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        InquireTransactionHistoryListRequestDto historyRequestDto = InquireTransactionHistoryListRequestDto.builder()
+                .accountNo(accountNo)
+                .startDate(today.minusMonths(3).format(formatter)) // 최근 3개월
+                .endDate(today.format(formatter))
+                .transactionType("A") // 전체
+                .orderByType("DESC") // 최신순
+                .build();
+
+        // 3. 어댑터를 통해 외부 API를 호출하여 거래 내역을 가져옵니다.
+        InquireTransactionHistoryListResponse historyResponse = adapter.inquireTransactionHistoryList(userKey, historyRequestDto);
+
+        // 4. DTO의 toDto 메서드를 호출하여 최종 응답 객체를 생성하고 반환합니다.
+        return AccountDetailResponse.toDto(account, historyResponse);
+    }
+
 
 }
