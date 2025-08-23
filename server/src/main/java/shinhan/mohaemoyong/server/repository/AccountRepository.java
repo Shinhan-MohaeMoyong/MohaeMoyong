@@ -14,4 +14,13 @@ public interface AccountRepository extends JpaRepository<Accounts, Long> {
      * @return 해당 사용자의 Accounts 목록
      */
     List<Accounts> findAllByUser(User user);
+
+    /**
+     * 여러 계좌번호에 해당하는 계좌 목록을 한 번의 쿼리로 조회합니다.
+     * @param accountNumbers 조회할 계좌번호 리스트
+     * @return 조회된 Accounts 엔티티 리스트
+     */
+    List<Accounts> findAllByAccountNumberIn(List<String> accountNumbers);
+
+
 }

@@ -7,8 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import shinhan.mohaemoyong.server.domain.ProductListResponse;
-import shinhan.mohaemoyong.server.dto.ProductServive;
-import shinhan.mohaemoyong.server.service.AccountListServive;
+import shinhan.mohaemoyong.server.service.ProductServive;
 
 import java.util.List;
 

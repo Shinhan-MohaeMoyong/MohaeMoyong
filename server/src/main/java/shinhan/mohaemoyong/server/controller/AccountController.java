@@ -4,10 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
+import shinhan.mohaemoyong.server.dto.AccountCreateRequest;
 import shinhan.mohaemoyong.server.dto.SearchAccountResponseDto;
 import shinhan.mohaemoyong.server.dto.SimpleAccountListResponse;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
@@ -39,6 +38,14 @@ public class AccountController {
 
         List<SimpleAccountListResponse> response = accountListServive.getSimpleAccountList(userkey);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createAccount (@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountCreateRequest request) {
+
+        accountService.createAccount(userPrincipal, request);
+
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 }

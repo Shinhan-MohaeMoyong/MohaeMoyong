@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositAccountResponse;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositListResponse;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
 import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.domain.User;
+import shinhan.mohaemoyong.server.dto.AccountCreateRequest;
 import shinhan.mohaemoyong.server.dto.SearchAccountResponseDto;
 import shinhan.mohaemoyong.server.dto.WeeklySavingDto;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
@@ -116,5 +119,28 @@ public class AccountService {
         WeekFields weekFields = WeekFields.of(DayOfWeek.SUNDAY, 1);
         int weekOfMonth = date.get(weekFields.weekOfMonth());
         return String.format("%d월 %d주", month, weekOfMonth);
+    }
+
+    @Transactional
+    public void createAccount(UserPrincipal userPrincipal, AccountCreateRequest request) {
+        // 0. userKey로 User 엔티티를 조회 (DB 저장을 위해 필요)
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        String userKey = userPrincipal.getUserkey();
+
+
+        String productUniqueNo = request.getAccountTypeUniqueNo();
+
+        // 3. 싸피 금융 API를 호출하여 계좌를 실제로 생성합니다.
+        CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.createDemandDepositAccount(userKey, productUniqueNo);
+
+        // 이거는 우리가 입력한 계좌별칭
+        String customAccountName = request.getAccountName();
+
+        Accounts newAccount = createResponse.toEntity(user, customAccountName);
+
+        // 5. 생성된 엔티티를 우리 DB에 저장합니다.
+        accountsRepository.save(newAccount);
     }
 }
