@@ -135,10 +135,13 @@ public class AccountService {
         // 3. 싸피 금융 API를 호출하여 계좌를 실제로 생성합니다.
         CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.createDemandDepositAccount(userKey, productUniqueNo);
 
-        // 이거는 우리가 입력한 계좌별칭
+        // 이거는 사용자가 입력한 계좌별칭
         String customAccountName = request.getAccountName();
 
-        Accounts newAccount = createResponse.toEntity(user, customAccountName);
+        // 이건 사용자가 입력한 목표 저축금액
+        Long customTargetAmount = request.getTargetAmount();
+
+        Accounts newAccount = createResponse.toEntity(user, customAccountName, customTargetAmount);
 
         // 5. 생성된 엔티티를 우리 DB에 저장합니다.
         accountsRepository.save(newAccount);
