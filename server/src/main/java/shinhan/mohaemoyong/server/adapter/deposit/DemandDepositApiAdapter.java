@@ -1,13 +1,17 @@
 package shinhan.mohaemoyong.server.adapter.deposit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import shinhan.mohaemoyong.server.adapter.common.factory.HeaderFactory;
 import shinhan.mohaemoyong.server.adapter.common.headerDto.RequestHeader;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.request.*;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.*;
+import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
+import shinhan.mohaemoyong.server.adapter.exception.ExceptionResponseDto;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
 
@@ -16,6 +20,7 @@ import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryLi
 public class DemandDepositApiAdapter {
     private final RestTemplate restTemplate;
     private final HeaderFactory headerFactory;
+    private final ObjectMapper objectMapper;
 
     // application.properties 파일에서 설정 정보 가져오기
     @Value("${api.shinhan.base-url}")
@@ -25,10 +30,12 @@ public class DemandDepositApiAdapter {
     private String apiKey;
 
     // 생성자를 통해 RestTemplate Bean을 주입받습니다.
-    public DemandDepositApiAdapter(RestTemplate restTemplate, HeaderFactory headerFactory) {
+    public DemandDepositApiAdapter(RestTemplate restTemplate, HeaderFactory headerFactory, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.headerFactory = headerFactory;
+        this.objectMapper = objectMapper;
     }
+
 
     /**
      * 수시입출금 상품을 등록하는 API를 호출합니다.
@@ -172,6 +179,24 @@ public class DemandDepositApiAdapter {
             }
             log.info("계좌 이체 성공. 응답 코드: {}", response.getHeader().getResponseCode());
             return response;
+        } catch (HttpClientErrorException e) { // 4xx 에러 처리
+            String errorBody = e.getResponseBodyAsString();
+            log.warn("API 클라이언트 오류: {}, 응답: {}", e.getStatusCode(), errorBody);
+
+            try {
+                // 1. 에러 응답 바디를 DTO로 파싱합니다.
+                ExceptionResponseDto errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
+
+                // 2. responseCode 필드의 값을 직접 비교합니다.
+                if ("A1014".equals(errorResponse.getErrorCode())) {
+                    throw new ApiErrorException(errorResponse.getErrorCode() ,errorResponse.getErrorMessage());
+                }
+            } catch (Exception parseException) {
+                log.error("API 에러 응답 파싱 실패", parseException);
+            }
+            // 그 외 4xx 에러
+            throw new RuntimeException("API 요청 처리 중 오류가 발생했습니다: " + errorBody);
+            // 그 외 4xx 에러
         } catch (Exception e) {
             log.error("계좌 이체 실패. 에러: {}", e.getMessage());
             throw new RuntimeException("계좌 이체에 실패했습니다.");
