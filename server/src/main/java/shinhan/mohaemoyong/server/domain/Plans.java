@@ -60,6 +60,12 @@ public class Plans {
     @Column(name = "savings_amount")
     private Integer savingsAmount;
 
+    @Column(name = "depositAccountNo") // 입금 계좌 번호
+    private String depositAccountNo;
+
+    @Column(name = "withdrawalAccountNo") // 출금 계좌 번호
+    private String withdrawAccountNo;
+
     // enum 대신 문자열
     @Column(name = "privacy_level", nullable = false, length = 255)
     private String privacyLevel = "PUBLIC";
@@ -157,6 +163,10 @@ public class Plans {
             this.deletedAt = now;
             this.updatedAt = now;
         }
+    }
+
+    public void isCompletedUpdate() {
+        this.isCompleted = true;
     }
 
 

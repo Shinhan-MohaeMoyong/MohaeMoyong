@@ -1,20 +1,24 @@
 package shinhan.mohaemoyong.server.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositAccountResponse;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositListResponse;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.UpdateDemandDepositAccountTransferResponse;
+import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.domain.Accounts;
+import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.AccountCreateRequest;
 import shinhan.mohaemoyong.server.dto.SearchAccountResponseDto;
 import shinhan.mohaemoyong.server.dto.WeeklySavingDto;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.AccountRepository;
+import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
@@ -30,13 +34,14 @@ import java.util.stream.Collectors;
 /**
  * 계좌 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
-@Service
+@Service @Slf4j
 @RequiredArgsConstructor
 public class AccountService {
 
     private final AccountRepository accountsRepository;
     private final UserRepository userRepository;
     private final DemandDepositApiAdapter demandDepositApiAdapter;
+    private final PlanRepository planRepository;
 
     /**
      * 사용자의 모든 계좌에 대한 저축 현황을 조회합니다.
@@ -145,5 +150,35 @@ public class AccountService {
 
         // 5. 생성된 엔티티를 우리 DB에 저장합니다.
         accountsRepository.save(newAccount);
+    }
+
+    @Transactional
+    public void deposit(UserPrincipal userPrincipal, Long planId) {
+        Plans plans = planRepository.findById(planId).orElseThrow(() ->
+                new IllegalArgumentException("존재하지 않는 일정입니다."));
+
+        String userkey = userPrincipal.getUserkey();
+
+        String depositAccountNo = plans.getDepositAccountNo();
+        String withdrawAccountNo = plans.getWithdrawAccountNo();
+        Long balance = Long.valueOf(plans.getSavingsAmount());
+
+        try {
+            // 1. API를 통한 계좌 이체를 시도합니다.
+            demandDepositApiAdapter.transfer(userkey, withdrawAccountNo, depositAccountNo, balance);
+
+            // 2. 이체가 성공했을 경우에만 약속 완료 처리를 합니다.
+            plans.isCompletedUpdate();
+
+        } catch (ApiErrorException e) {
+            // 3. 어댑터가 던진 ApiErrorException을 여기서 잡습니다.
+            // 서비스 레벨에서 필요한 처리를 합니다 (예: 실패 로그 기록).
+            log.warn("ID {} 약속의 자동이체 실패 (API 오류): 코드 [{}], 메시지 [{}]",
+                    planId, e.getErrorCode(), e.getErrorMessage());
+
+            // 4. 잡은 예외를 다시 던져서 트랜잭션을 롤백시키고,
+            //    컨트롤러가 이 예외를 받아 클라이언트에게 적절한 에러 응답을 보내도록 합니다.
+            throw e;
+        }
     }
 }

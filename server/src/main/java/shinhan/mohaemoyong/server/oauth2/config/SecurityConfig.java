@@ -1,6 +1,7 @@
 package shinhan.mohaemoyong.server.oauth2.config;
 
 
+import jakarta.servlet.http.HttpServletResponse; // HttpServletResponse import 추가
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,6 @@ import shinhan.mohaemoyong.server.oauth2.security.RestAuthenticationEntryPoint;
 import shinhan.mohaemoyong.server.oauth2.security.TokenAuthenticationFilter;
 import shinhan.mohaemoyong.server.oauth2.security.oauth2.CustomOAuth2UserService;
 import shinhan.mohaemoyong.server.oauth2.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
-import shinhan.mohaemoyong.server.oauth2.security.oauth2.OAuth2AuthenticationFailureHandler;
 import shinhan.mohaemoyong.server.oauth2.security.oauth2.OAuth2AuthenticationSuccessHandler;
 
 
@@ -42,8 +42,9 @@ public class SecurityConfig {
     @Autowired
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    @Autowired
-    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    // OAuth2AuthenticationFailureHandler 의존성 주입 제거
+    // @Autowired
+    // private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Autowired
     private HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
@@ -53,11 +54,6 @@ public class SecurityConfig {
         return new TokenAuthenticationFilter();
     }
 
-    /*
-      By default, Spring OAuth2 uses HttpSessionOAuth2AuthorizationRequestRepository to save
-      the authorization request. But, since our service is stateless, we can't save it in
-      the session. We'll save the request in a Base64 encoded cookie instead.
-    */
     @Bean
     public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
         return new HttpCookieOAuth2AuthorizationRequestRepository();
@@ -78,21 +74,21 @@ public class SecurityConfig {
     protected SecurityFilterChain filterChain (HttpSecurity http) throws Exception {
         http
                 .cors()
-                    .and()
+                .and()
                 .sessionManagement()
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .csrf()
-                    .disable()
+                .disable()
                 .formLogin()
-                    .disable()
+                .disable()
                 .httpBasic()
-                    .disable()
+                .disable()
                 .exceptionHandling()
-                    .authenticationEntryPoint(new RestAuthenticationEntryPoint())
-                    .and()
+                .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                .and()
                 .authorizeRequests()
-                    .requestMatchers("/",
+                .requestMatchers("/",
                         "/error",
                         "/favicon.ico",
                         "/**.png",
@@ -103,25 +99,30 @@ public class SecurityConfig {
                         "/**.css",
                         "/**.js",
                         "/health")
-                        .permitAll()
-                    .requestMatchers("/auth/**", "/oauth2/**")
-                        .permitAll()
-                    .anyRequest()
-                        .authenticated()
-                    .and()
+                .permitAll()
+                .requestMatchers("/auth/**", "/oauth2/**")
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
                 .oauth2Login()
-                    .authorizationEndpoint()
-                        .baseUri("/oauth2/authorization")
-                        .authorizationRequestRepository(cookieAuthorizationRequestRepository())
-                        .and()
-                    .redirectionEndpoint()
-                        .baseUri("/oauth2/callback/*")
-                        .and()
-                    .userInfoEndpoint()
-                        .userService(customOAuth2UserService) //로그인 후 후처리
-                        .and()
-                    .successHandler(oAuth2AuthenticationSuccessHandler)
-                    .failureHandler(oAuth2AuthenticationFailureHandler);
+                .authorizationEndpoint()
+                .baseUri("/oauth2/authorization")
+                .authorizationRequestRepository(cookieAuthorizationRequestRepository())
+                .and()
+                .redirectionEndpoint()
+                .baseUri("/oauth2/callback/*")
+                .and()
+                .userInfoEndpoint()
+                .userService(customOAuth2UserService) //로그인 후 후처리
+                .and()
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+                // 기존 FailureHandler 주입 대신 람다식으로 직접 에러 응답을 생성합니다.
+                .failureHandler((request, response, exception) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 상태 코드
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\": \"로그인 실패\", \"message\": \"" + exception.getMessage() + "\"}");
+                });
 
         // Add our custom Token based authentication filter
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
