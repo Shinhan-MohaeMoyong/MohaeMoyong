@@ -1,6 +1,7 @@
 package shinhan.mohaemoyong.server.service.financedto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -9,7 +10,7 @@ import lombok.ToString;
  */
 @Getter
 @AllArgsConstructor
-@ToString
+@ToString @Builder
 public class InquireTransactionHistoryListRequestDto {
     private String accountNo;
     private String startDate;

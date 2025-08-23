@@ -5,6 +5,7 @@ import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.domain.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Accounts, Long> {
 
@@ -22,5 +23,6 @@ public interface AccountRepository extends JpaRepository<Accounts, Long> {
      */
     List<Accounts> findAllByAccountNumberIn(List<String> accountNumbers);
 
+    Optional<Accounts> findByAccountNumber(String accountNumber);
 
 }
