@@ -11,6 +11,7 @@ import shinhan.mohaemoyong.server.dto.*;
 import shinhan.mohaemoyong.server.repository.FriendshipRepository;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
+import shinhan.mohaemoyong.server.domain.ParticipantRole;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -95,18 +96,24 @@ public class PlanService {
             if (req.type() == PlanType.GROUP) {
                 Set<Long> all = new HashSet<>(participantIds);
                 all.add(creatorId);
+
                 for (Long uid : all) {
                     User u = (uid.equals(creatorId)) ? creator
                             : userRepository.findById(uid)
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 ID: " + uid));
+
+                    ParticipantRole role = (uid.equals(creatorId)) ? ParticipantRole.OWNER : ParticipantRole.MEMBER;
+
                     PlanParticipants pp = PlanParticipants.builder()
                             .plan(plan)
                             .user(u)
-                            .role("member")
+                            .role(role)
                             .build();
+
                     plan.addParticipant(pp);
                 }
             }
+
 
             planRepository.save(plan);
             created.add(plan);

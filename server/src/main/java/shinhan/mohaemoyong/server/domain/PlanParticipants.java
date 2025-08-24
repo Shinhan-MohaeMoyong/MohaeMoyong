@@ -36,8 +36,10 @@ public class PlanParticipants {
     @JoinColumn(name = "id", nullable = false)
     private User user;
 
-    @Column(name = "role", nullable = false, length = 255)
-    private String role = "member";
+    // ✅ 변경된 부분
+    @Enumerated(EnumType.STRING)  // DB에 문자열 OWNER / MEMBER 로 저장
+    @Column(name = "role", nullable = false, length = 20)
+    private ParticipantRole role;
 
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
