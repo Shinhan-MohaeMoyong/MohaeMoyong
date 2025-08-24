@@ -1,8 +1,8 @@
 package shinhan.mohaemoyong.server.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.domain.PlanPhotos;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.PlanParticipants;
@@ -242,33 +242,20 @@ public class PlanService {
         return ordered;
     }
 
-    public List<DetailPlanResponse> selectPlansByDate(LocalDate date) {
+    @Transactional(readOnly = true)
+    public List<DetailOneDayPlanResponse> selectPlansByDate(LocalDate date, Long userId) {
         LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
-        List<Plans> foundPlans = planRepository.findPlansByDateRangeWithUser(startOfDay, endOfDay);
+        // 해당 날짜의 다음 날 00:00:00을 기준으로 범위 설정
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+
+        // userId 매개변수를 추가하여 해당 사용자의 일정만 조회하게 리팩터링
+        // 시작 시간이 해당 날짜에 속하는 플랜만 조회
+        List<Plans> foundPlans = planRepository.findPlansByStartDateWithUser(startOfDay, endOfDay, userId);
+
         return foundPlans.stream()
-                .map(this::ToDTODetailPlanResponse)
+                .map(DetailOneDayPlanResponse::toDto)
                 .collect(Collectors.toList());
     }
 
-    private DetailPlanResponse ToDTODetailPlanResponse(Plans plan) {
-        User author = plan.getUser();
-        return new DetailPlanResponse(
-                plan.getPlanId(),
-                author.getId(),
-                author.getName(),
-                plan.getTitle(),
-                plan.getContent(),
-                plan.getImageUrl(),
-                plan.getPlace(),
-                plan.getStartTime(),
-                plan.getEndTime(),
-                plan.isCompleted(),
-                plan.isHasSavingsGoal(),
-                plan.getSavingsAmount(),
-                plan.getPrivacyLevel(),
-                plan.getCommentCount(),
-                List.of()
-        );
-    }
+
 }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ExceptionResponseDto {
-    private String errorCode;
-    private String errorMessage;
+    private String responseCode;
+    private String responseMessage;
 
 }

@@ -162,10 +162,11 @@ public class AccountService {
         String depositAccountNo = plans.getDepositAccountNo();
         String withdrawAccountNo = plans.getWithdrawAccountNo();
         Long balance = Long.valueOf(plans.getSavingsAmount());
+        String summary = plans.getTitle();
 
         try {
             // 1. API를 통한 계좌 이체를 시도합니다.
-            demandDepositApiAdapter.transfer(userkey, withdrawAccountNo, depositAccountNo, balance);
+            demandDepositApiAdapter.transfer(userkey, withdrawAccountNo, depositAccountNo, balance, summary);
 
             // 2. 이체가 성공했을 경우에만 약속 완료 처리를 합니다.
             plans.isCompletedUpdate();

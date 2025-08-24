@@ -157,7 +157,7 @@ public class DemandDepositApiAdapter {
      * @return 이체 결과가 담긴 DTO
      */
 
-    public UpdateDemandDepositAccountTransferResponse transfer(String userKey, String withdrawalAccountNo, String depositAccountNo, Long transactionBalance) {
+    public UpdateDemandDepositAccountTransferResponse transfer(String userKey, String withdrawalAccountNo, String depositAccountNo, Long transactionBalance, String summary) {
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
         RequestHeader header = headerFactory.createHeader("updateDemandDepositAccountTransfer", userKey);
 
@@ -166,8 +166,8 @@ public class DemandDepositApiAdapter {
                 depositAccountNo,
                 transactionBalance,
                 withdrawalAccountNo,
-                "입금(이체)",
-                "출금(이체)"
+                summary,
+                summary
         );
 
         log.info("계좌 이체 요청: 출금 [{}], 입금 [{}], 금액 [{}]", withdrawalAccountNo, depositAccountNo, transactionBalance);
@@ -183,20 +183,25 @@ public class DemandDepositApiAdapter {
             String errorBody = e.getResponseBodyAsString();
             log.warn("API 클라이언트 오류: {}, 응답: {}", e.getStatusCode(), errorBody);
 
+            ExceptionResponseDto errorResponse;
             try {
-                // 1. 에러 응답 바디를 DTO로 파싱합니다.
-                ExceptionResponseDto errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
-
-                // 2. responseCode 필드의 값을 직접 비교합니다.
-                if ("A1014".equals(errorResponse.getErrorCode())) {
-                    throw new ApiErrorException(errorResponse.getErrorCode() ,errorResponse.getErrorMessage());
-                }
+                // 1. 이 try-catch 블록은 오직 '파싱'만 책임집니다.
+                errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
             } catch (Exception parseException) {
+                // 2. 파싱 자체를 실패한 경우에만 이곳으로 옵니다.
                 log.error("API 에러 응답 파싱 실패", parseException);
+                throw new RuntimeException("API 에러 응답을 파싱할 수 없습니다: " + errorBody);
             }
-            // 그 외 4xx 에러
-            throw new RuntimeException("API 요청 처리 중 오류가 발생했습니다: " + errorBody);
-            // 그 외 4xx 에러
+
+            // 3. 파싱이 성공한 후, 그 결과를 가지고 분기하여 예외를 던집니다.
+            if ("A1014".equals(errorResponse.getResponseCode())) {
+                log.error("잔액부족(A1014) 에러를 ApiErrorException으로 변환합니다.");
+                throw new ApiErrorException(errorResponse.getResponseCode(), errorResponse.getResponseMessage());
+            } else {
+                log.error("처리되지 않은 API 클라이언트 오류: {}", errorResponse.getResponseCode());
+                throw new RuntimeException("API 요청 처리 중 오류가 발생했습니다: " + errorBody);
+            }
+
         } catch (Exception e) {
             log.error("계좌 이체 실패. 에러: {}", e.getMessage());
             throw new RuntimeException("계좌 이체에 실패했습니다.");
