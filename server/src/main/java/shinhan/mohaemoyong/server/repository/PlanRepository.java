@@ -146,4 +146,13 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
             @Param("endOfDay") LocalDateTime endOfDay,
             @Param("userId") Long userId
     );
+
+    @Query("""
+    select p
+    from Plans p
+    join fetch p.user u
+    where p.planId = :planId
+      and p.deletedAt is null
+""")
+    Optional<Plans> findDetailById(@Param("planId") Long planId);
 }

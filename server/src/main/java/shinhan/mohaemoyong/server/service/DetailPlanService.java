@@ -15,7 +15,7 @@ import shinhan.mohaemoyong.server.repository.PlanRepository;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import shinhan.mohaemoyong.server.dto.PrivacyLevel;
 @Service
 @RequiredArgsConstructor
 public class DetailPlanService {
@@ -23,18 +23,20 @@ public class DetailPlanService {
     private final PlanRepository planRepository;
     private final AccessControlService accessControlService;
     private final PlanPhotoRepository planPhotoRepository;
-    private static final Set<String> PRIVACY_ALLOWED = Set.of("PUBLIC", "PRIVATE");
 
     @Transactional(readOnly = true)
     public DetailPlanResponse getDetail(UserPrincipal userPrincipal, Long planId) {
         // DetailPlanService.java
-        Plans p = planRepository.findDetailByOwner(userPrincipal.getId(), planId)
+        Plans p = planRepository.findDetailById(planId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Plans", "planId/userId", planId + "/" + userPrincipal.getId())
                 );
 
         // plan 접근 권한 설정
         if (!accessControlService.canViewPlan(p, userPrincipal)) {
+            System.out.printf("❌ Access denied: userId=%d -> planId=%d (ownerId=%d, privacyLevel=%s)%n",
+                    userPrincipal.getId(), planId, p.getUser().getId(), p.getPrivacyLevel());
+
             throw new ResourceNotFoundException("Plans", "planId", planId);
         }
 
@@ -58,9 +60,16 @@ public class DetailPlanService {
         // privacyLevel 정규화
         if (req.privacyLevel() != null) {
             String normalized = req.privacyLevel().trim().toUpperCase();
-            if (!PRIVACY_ALLOWED.contains(normalized)) {
-                throw new IllegalArgumentException("privacyLevel must be one of " + PRIVACY_ALLOWED);
+
+            try {
+                // enum 이름과 매칭되는지 검증 (없으면 예외)
+                PrivacyLevel.valueOf(normalized);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                        "privacyLevel must be one of " + Arrays.toString(PrivacyLevel.values())
+                );
             }
+
             req = new DetailPlanUpdateRequest(
                     req.title(), req.content(), req.imageUrl(), req.place(),
                     req.startTime(), req.endTime(), req.isCompleted(),

@@ -39,4 +39,17 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
             or (f.user.id = :b and f.friend.id = :a)
     """)
     boolean existsFriendEdge(@Param("a") Long a, @Param("b") Long b);
+
+
+    @Query("""
+        select count(f)
+        from Friendship f
+        where
+            (
+               (f.user.id = :a and f.friend.id = :b)
+            or (f.user.id = :b and f.friend.id = :a)
+            )
+    """)
+    long countActiveBetween(@Param("a") Long a, @Param("b") Long b);
+
 }
