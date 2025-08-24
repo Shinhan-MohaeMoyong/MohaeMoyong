@@ -14,13 +14,15 @@ public record PlanCreateResponse(
         PrivacyLevel privacyLevel,
         Boolean hasSavingsGoal,
         Integer savingsAmount,
+        String depositAccountNo,        // ✅ 추가
+        String withdrawalAccountNo,     // ✅ 추가
         String imageUrl,
         List<Long> participantIds,
         List<String> photos,
         RecurrenceCreateReq recurrence,
 
-        String seriesId,                  // 단일 생성이면 null
-        Integer createdCount,             // 생성된 일정 개수
-        List<Long> planIds,               // 생성된 모든 planId
-        List<CreatedPlanItem> items       // 생성된 일정 요약
+        String seriesId,                 // 단일 생성이면 null
+        Integer createdCount,            // 생성된 일정 개수
+        List<Long> planIds,              // 생성된 모든 planId
+        List<CreatedPlanItem> items      // 생성된 일정 요약
 ) {}
