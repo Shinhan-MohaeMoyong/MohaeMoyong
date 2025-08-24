@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.domain.User;
+import shinhan.mohaemoyong.server.dto.DetailOneDayPlanResponse;
 import shinhan.mohaemoyong.server.dto.DetailPlanResponse;
 import shinhan.mohaemoyong.server.dto.PlanCreateRequest;
 import shinhan.mohaemoyong.server.dto.PlanCreateResponse;
@@ -42,11 +43,12 @@ public class PlanController {
     }
 
     @GetMapping("/{date}/myPlans")
-    public ResponseEntity<List<DetailPlanResponse>> getPlansByDate(
+    public ResponseEntity<List<DetailOneDayPlanResponse>> getPlansByDate(
             @CurrentUser UserPrincipal userPrincipal,
-            @PathVariable @DateTimeFormat(pattern = "yyyyMMdd") LocalDate date){
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
 
-        List<DetailPlanResponse> plans = planService.selectPlansByDate(date);
-        return ResponseEntity.ok(plans);
+        Long userId = userPrincipal.getId();
+        List<DetailOneDayPlanResponse> plans = planService.selectPlansByDate(date, userId);
+        return new ResponseEntity<>(plans, HttpStatus.OK);
     }
 }

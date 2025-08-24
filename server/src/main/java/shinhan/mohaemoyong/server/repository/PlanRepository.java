@@ -133,15 +133,17 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
 
     /** 📌 하루 단위 일정 조회 */
     @Query("""
-        SELECT p
-        FROM Plans p
-          JOIN FETCH p.user
-        WHERE p.startTime <= :endOfDay
-          AND p.endTime >= :startOfDay
-          AND p.deletedAt IS NULL
-    """)
-    List<Plans> findPlansByDateRangeWithUser(
+    SELECT p
+    FROM Plans p
+      JOIN FETCH p.user u
+    WHERE p.startTime >= :startOfDay
+      AND p.startTime < :endOfDay
+      AND p.deletedAt IS NULL
+      AND u.id = :userId
+""")
+    List<Plans> findPlansByStartDateWithUser(
             @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay
+            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("userId") Long userId
     );
 }
