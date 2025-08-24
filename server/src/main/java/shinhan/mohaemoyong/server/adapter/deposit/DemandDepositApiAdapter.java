@@ -157,7 +157,7 @@ public class DemandDepositApiAdapter {
      * @return 이체 결과가 담긴 DTO
      */
 
-    public UpdateDemandDepositAccountTransferResponse transfer(String userKey, String withdrawalAccountNo, String depositAccountNo, Long transactionBalance) {
+    public UpdateDemandDepositAccountTransferResponse transfer(String userKey, String withdrawalAccountNo, String depositAccountNo, Long transactionBalance, String summary) {
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
         RequestHeader header = headerFactory.createHeader("updateDemandDepositAccountTransfer", userKey);
 
@@ -166,8 +166,8 @@ public class DemandDepositApiAdapter {
                 depositAccountNo,
                 transactionBalance,
                 withdrawalAccountNo,
-                "입금(이체)",
-                "출금(이체)"
+                summary,
+                summary
         );
 
         log.info("계좌 이체 요청: 출금 [{}], 입금 [{}], 금액 [{}]", withdrawalAccountNo, depositAccountNo, transactionBalance);
