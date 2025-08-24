@@ -38,28 +38,21 @@ public class FriendPlanService {
 
     /** 📌 이번주 새로운 일정 여부 확인 (개인 + 그룹 공개 포함) */
     @Transactional(readOnly = true)
-    public boolean hasNewPlanThisWeek(Long userId, Long friendId) {
-        ensureFriendship(userId, friendId);
+    public boolean hasNewPlanThisWeek(Long viewerId, Long friendId) {
+        ensureFriendship(viewerId, friendId);
 
-        LocalDate today = LocalDate.now(ZONE);
-        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDateTime now   = LocalDateTime.now(ZONE);
+        LocalDateTime until = now.plusDays(7);
 
-        LocalDateTime startOfWeek = monday.atStartOfDay();
-        LocalDateTime endOfWeek   = sunday.atTime(LocalTime.MAX);
+        LocalDateTime lastSeen = lastSeenRepository
+                .findByUserIdAndFriendId(viewerId, friendId)
+                .map(FriendLastSeen::getLastSeenAt)
+                .orElse(LocalDateTime.of(1970,1,1,0,0));
 
-        List<Plans> recentPlans =
-                planRepository.findFriendWeeklyPublicPlans(friendId, startOfWeek, endOfWeek);
-
-        if (recentPlans.isEmpty()) return false;
-
-        FriendLastSeen lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(userId, friendId)
-                .orElse(new FriendLastSeen(userId, friendId, LocalDateTime.MIN));
-
-        return recentPlans.stream()
-                .anyMatch(p -> p.getCreatedAt().isAfter(lastSeen.getLastSeenAt()));
+        // ✅ 존재 여부만 확인 (빠름)
+        return planRepository.existsNewPublicPlansForFriendWithin7Days(friendId, now, until, lastSeen);
     }
+
 
     /** 📌 친구 일정 확인 → lastSeen 업데이트 */
     @Transactional
@@ -76,21 +69,18 @@ public class FriendPlanService {
 
     /** 📌 이번주 친구 일정 + isNew 플래그 (개인 + 그룹 공개 포함) */
     @Transactional
-    public List<FriendWeeklyPlanDto> getFriendWeeklyPlansWithNewFlag(Long userId, Long friendId) {
-        ensureFriendship(userId, friendId);
+    public List<FriendWeeklyPlanDto> getFriendWeeklyPlansWithNewFlag(Long viewerId, Long friendId) {
+        ensureFriendship(viewerId, friendId);
 
-        LocalDate today = LocalDate.now(ZONE);
-        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDateTime now   = LocalDateTime.now(ZONE);
+        LocalDateTime until = now.plusDays(7);
 
-        LocalDateTime startOfWeek = monday.atStartOfDay();
-        LocalDateTime endOfWeek   = sunday.atTime(LocalTime.MAX);
+        List<Plans> plans = planRepository.findFriendPublicPlansWithin7Days(friendId, now, until);
 
-        List<Plans> plans = planRepository.findFriendWeeklyPublicPlans(friendId, startOfWeek, endOfWeek);
-
-        FriendLastSeen lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(userId, friendId)
-                .orElse(new FriendLastSeen(userId, friendId, LocalDateTime.MIN));
+        LocalDateTime lastSeen = lastSeenRepository
+                .findByUserIdAndFriendId(viewerId, friendId)
+                .map(FriendLastSeen::getLastSeenAt)
+                .orElse(LocalDateTime.of(1970,1,1,0,0));
 
         List<FriendWeeklyPlanDto> result = plans.stream()
                 .map(p -> FriendWeeklyPlanDto.builder()
@@ -99,19 +89,20 @@ public class FriendPlanService {
                         .place(p.getPlace())
                         .startTime(p.getStartTime())
                         .endTime(p.getEndTime())
-                        .isNew(p.getCreatedAt() != null &&
-                                p.getCreatedAt().isAfter(lastSeen.getLastSeenAt()))
+                        .isNew(p.getCreatedAt() != null && p.getCreatedAt().isAfter(lastSeen))
                         .build())
                 .toList();
 
-
-
         // ✅ 조회 후 자동 seen 처리
-        lastSeen.updateLastSeen(LocalDateTime.now());
-        lastSeenRepository.save(lastSeen);
+        FriendLastSeen entity = lastSeenRepository
+                .findByUserIdAndFriendId(viewerId, friendId)
+                .orElse(new FriendLastSeen(viewerId, friendId, LocalDateTime.of(1970,1,1,0,0)));
+        entity.updateLastSeen(LocalDateTime.now(ZONE));
+        lastSeenRepository.save(entity);
 
         return result;
     }
+
 
     /** 📌 친구 전체 공개 일정 조회 (개인 + 그룹) */
     @Transactional
