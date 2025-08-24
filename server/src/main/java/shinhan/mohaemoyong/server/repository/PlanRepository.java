@@ -1,6 +1,5 @@
 package shinhan.mohaemoyong.server.repository;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -8,54 +7,47 @@ import org.springframework.data.repository.query.Param;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.FriendPlanDto;
-import shinhan.mohaemoyong.server.dto.HomeWeekResponse;
 
-import java.awt.print.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface PlanRepository extends JpaRepository<Plans, Long> {
 
-    // 내 이번주 일정 조회
+    /** ✅ 내 이번주 일정 조회 (내가 만든 일정 + 그룹 초대 일정, photos 포함) */
     @Query("""
-        SELECT p.planId AS planId,
-               p.title AS title,
-               p.place AS place,
-               p.startTime AS startTime,
-               p.endTime AS endTime
+        SELECT DISTINCT p
         FROM Plans p
-        WHERE p.user.id = :userId
+        LEFT JOIN FETCH p.photos
+        LEFT JOIN p.participants pp
+        WHERE (p.user.id = :userId OR pp.user.id = :userId)
           AND p.deletedAt IS NULL
           AND p.startTime < :endOfWeek
           AND p.endTime   >= :startOfWeek
-          AND p.privacyLevel <> 'PRIVATE'
         ORDER BY p.startTime ASC
     """)
-    List<HomeWeekResponse> findWeeklyPlans(
+    List<Plans> findPlansByUserAndDateRange(
             @Param("userId") Long userId,
             @Param("startOfWeek") LocalDateTime startOfWeek,
             @Param("endOfWeek") LocalDateTime endOfWeek
     );
 
-    // 내 전체 일정 조회
+    /** ✅ 내 전체 일정 조회 (내가 만든 일정 + 그룹 초대 일정, photos 포함) */
     @Query("""
-    SELECT p.planId AS planId,
-           p.title AS title,
-           p.place AS place,
-           p.startTime AS startTime,
-           p.endTime AS endTime
-    FROM Plans p
-    WHERE p.user.id = :userId
-      AND p.deletedAt IS NULL
-    ORDER BY p.startTime ASC
-""")
-    List<HomeWeekResponse> findAllPlansByUserId(@Param("userId") Long userId);
+        SELECT DISTINCT p
+        FROM Plans p
+        LEFT JOIN FETCH p.photos
+        LEFT JOIN p.participants pp
+        WHERE (p.user.id = :userId OR pp.user.id = :userId)
+          AND p.deletedAt IS NULL
+        ORDER BY p.startTime ASC
+    """)
+    List<Plans> findPlansByUserIdWithPhotos(@Param("userId") Long userId);
 
-
-    // 친구 일정 (오늘 ~ +7일 범위, rolling window)
+    /** ✅ 친구 일정 (오늘 ~ +7일 rolling window, 공개된 개인 일정만) */
     @Query("""
-        SELECT p FROM Plans p
+        SELECT p
+        FROM Plans p
         WHERE p.user.id = :friendId
           AND p.deletedAt IS NULL
           AND p.privacyLevel = 'PUBLIC'
@@ -69,52 +61,87 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
             @Param("end") LocalDateTime end
     );
 
-    // 친구 전체 공개 일정
+    /** ✅ 친구 이번주 공개 일정 (개인 + 그룹 초대) */
     @Query("""
-        SELECT new shinhan.mohaemoyong.server.dto.FriendPlanDto(
-            p.planId, p.title, p.place, p.startTime, p.endTime
-        )
+    SELECT DISTINCT p
+    FROM Plans p
+    LEFT JOIN p.participants part
+    WHERE p.deletedAt IS NULL
+      AND (p.user.id = :friendId OR part.user.id = :friendId)
+      AND p.privacyLevel = 'PUBLIC'
+      AND p.startTime < :endOfWeek
+      AND p.endTime   >= :startOfWeek
+    ORDER BY p.startTime ASC
+""")
+    List<Plans> findFriendWeeklyPublicPlans(
+            @Param("friendId") Long friendId,
+            @Param("startOfWeek") LocalDateTime startOfWeek,
+            @Param("endOfWeek") LocalDateTime endOfWeek
+    );
+
+
+
+    /** 친구 전체 공개 일정 (개인 + 그룹) */
+    @Query("""
+    SELECT DISTINCT p
+    FROM Plans p
+    LEFT JOIN p.participants part
+    WHERE p.deletedAt IS NULL
+      AND (
+        p.user.id = :friendId
+        OR part.user.id = :friendId
+      )
+      AND (p.privacyLevel = 'PERSONAL_PUBLIC' OR p.privacyLevel = 'GROUP_PUBLIC')
+    ORDER BY p.startTime ASC
+""")
+    List<Plans> findFriendAllPublicPlans(@Param("friendId") Long friendId);
+
+
+    /** 📌 DetailPlan 조회 (작성자 fetch). 댓글은 분리 API에서 처리 */
+    @Query("""
+        SELECT p
         FROM Plans p
-        WHERE p.user.id = :friendId
+          JOIN FETCH p.user u
+        WHERE p.planId = :planId
+          AND u.id = :userId
           AND p.deletedAt IS NULL
-          AND p.privacyLevel = 'PUBLIC'
-        ORDER BY p.startTime ASC
     """)
-    List<FriendPlanDto> findAllPublicPlansOfUser(@Param("friendId") Long friendId);
+    Optional<Plans> findDetailByOwner(
+            @Param("userId") Long userId,
+            @Param("planId") Long planId
+    );
 
-
-
-    /** DetailPlan 조회(작성자 fetch). 댓글은 분리 API에서 처리 */
-    @Query("""
-        select p
-        from Plans p
-          join fetch p.user u
-        where p.planId = :planId
-          and u.id = :userId
-          and p.deletedAt is null
-    """)
-    Optional<Plans> findDetailByOwner(@Param("userId") Long userId,
-                                      @Param("planId") Long planId);
-
-
-    /*댓글수 동기화*/
+    /** 📌 댓글수 동기화 (감소) */
     @Modifying
     @Query("""
-        update Plans p
-           set p.commentCount = CASE WHEN p.commentCount > 0 THEN p.commentCount - 1 ELSE 0 END
-         where p.planId = :planId
+        UPDATE Plans p
+           SET p.commentCount = CASE WHEN p.commentCount > 0 THEN p.commentCount - 1 ELSE 0 END
+         WHERE p.planId = :planId
     """)
     int decrementCommentCountSafely(Long planId);
 
+    /** 📌 댓글수 동기화 (증가) */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("update Plans p set p.commentCount = coalesce(p.commentCount,0) + 1 where p.planId = :planId")
+    @Query("""
+        UPDATE Plans p
+           SET p.commentCount = coalesce(p.commentCount, 0) + 1
+         WHERE p.planId = :planId
+    """)
     int incrementCommentCount(@Param("planId") Long planId);
 
     Long user(User user);
 
-    /* 하루 단위 일정 조회 */
-    @Query("SELECT p FROM Plans p JOIN FETCH p.user WHERE p.startTime <= :endOfDay AND p.endTime >= :startOfDay AND p.deletedAt IS NULL")
+    /** 📌 하루 단위 일정 조회 */
+    @Query("""
+        SELECT p
+        FROM Plans p
+          JOIN FETCH p.user
+        WHERE p.startTime <= :endOfDay
+          AND p.endTime >= :startOfDay
+          AND p.deletedAt IS NULL
+    """)
     List<Plans> findPlansByDateRangeWithUser(
             @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay);
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
 }
