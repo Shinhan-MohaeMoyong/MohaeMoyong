@@ -115,6 +115,7 @@ public class PlanService {
     // Entity를 DTO로 변환하는 private 헬퍼 메서드
     private DetailPlanResponse ToDTODetailPlanResponse(Plans plan) {
         User author = plan.getUser(); // 가독성을 위해 작성자 변수 할당
+
         return new DetailPlanResponse(
                 plan.getPlanId(),
                 author.getId(),
@@ -129,7 +130,8 @@ public class PlanService {
                 plan.isHasSavingsGoal(),
                 plan.getSavingsAmount(),
                 plan.getPrivacyLevel(),
-                plan.getCommentCount()
+                plan.getCommentCount(),
+                List.of() // ⬅ photos 빈 리스트로 급한 처리
         );
     }
 }
