@@ -24,6 +24,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
             "(f.user = :friend AND f.friend = :user)")
     void deletePair(User user, User friend);
 
+
+    @Query("""
+        select (count(f) > 0) from Friendship f
+         where f.user.id = :a and f.friend.id = :b
+    """)
+    boolean existsEdge(@Param("a") Long a, @Param("b") Long b);
+
+
     @Query("""
         select case when count(f) > 0 then true else false end
           from Friendship f

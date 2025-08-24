@@ -51,9 +51,11 @@ public class Plans {
     @Column(name = "place", length = 255)
     private String place;
 
+    @Builder.Default
     @Column(name = "is_completed", nullable = false)
     private boolean isCompleted = false;
 
+    @Builder.Default
     @Column(name = "has_savings_goal", nullable = false)
     private boolean hasSavingsGoal = false;
 
@@ -67,9 +69,11 @@ public class Plans {
     private String withdrawAccountNo;
 
     // enum 대신 문자열
+    @Builder.Default
     @Column(name = "privacy_level", nullable = false, length = 255)
     private String privacyLevel = "PUBLIC";
 
+    @Builder.Default
     @Column(name = "comment_count")
     private Integer commentCount = 0;
 
@@ -84,19 +88,28 @@ public class Plans {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "series_id", length = 36)
+    private String seriesId;              // 같은 반복 묶음이면 동일 UUID
+
+    @Column(name = "occurrence_index")
+    private Integer occurrenceIndex;      // 0부터 시작
+
     /** Plans(1) ↔ PlanPhotos(N) */
+    @Builder.Default
     @OneToMany(mappedBy = "plan",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<PlanPhotos> photos = new ArrayList<>();
 
     /** Plans(1) ↔ PlanParticipants(N) */
+    @Builder.Default
     @OneToMany(mappedBy = "plan",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<PlanParticipants> participants = new ArrayList<>();
 
     /** Plans(1) ↔ Comments(N) */
+    @Builder.Default
     @OneToMany(mappedBy = "plan",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
@@ -106,10 +119,15 @@ public class Plans {
     void setUserInternal(User user) { this.user = user; }
 
     // 내부 전용 편의 메서드
-    void addPhoto(PlanPhotos photo) {
-        photos.add(photo);
-        if (photo.getPlan() != this) photo.setPlanInternal(this);
+    public void addPhoto(PlanPhotos photo) {
+        if (!photos.contains(photo)) {
+            photos.add(photo);
+            if (photo.getPlan() != this) {
+                photo.setPlanInternal(this);
+            }
+        }
     }
+
 
     public void addParticipant(PlanParticipants pp) {
         // 중복 방지

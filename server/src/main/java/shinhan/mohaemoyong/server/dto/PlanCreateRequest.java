@@ -14,7 +14,8 @@ public record PlanCreateRequest(
         @NotBlank String title,
         String content,
         String place,
-        String imageUrl,
+
+        String imageUrl,                       // ✅ 대표 이미지 (썸네일)
 
         @NotNull LocalDateTime startTime,
         @NotNull LocalDateTime endTime,
@@ -24,5 +25,7 @@ public record PlanCreateRequest(
 
         List<Long> participantIds,             // GROUP일 때만 사용
 
-        @Valid RecurrenceCreateReq recurrence  // 반복 정보 (없으면 null)
+        @Valid RecurrenceCreateReq recurrence, // 반복 정보 (없으면 null)
+
+        List<String> photos                    // ✅ 나머지 사진들 (여러 장)
 ) {}
