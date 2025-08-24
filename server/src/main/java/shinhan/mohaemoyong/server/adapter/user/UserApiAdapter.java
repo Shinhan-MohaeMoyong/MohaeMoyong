@@ -81,7 +81,7 @@ public class UserApiAdapter {
             try {
                 ExceptionResponseDto payload = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
 
-                String body = payload.getErrorCode();
+                String body = payload.getResponseCode();
                 // if (body.equals("E4002")) { (카카오측에서 이외엔 다 잡아주고 반환한 결과를 활용하므로 일단 에러 하나로 고정이라 조건문 삭제)
 
                     // 호출부에서 처리하도록 전용 예외 던지기 (throw new 는 시큐리티가 감지해버려서 리턴해야하지만 일단은 이 예외가 발생할 일이 없으므로 그대로 둠)
