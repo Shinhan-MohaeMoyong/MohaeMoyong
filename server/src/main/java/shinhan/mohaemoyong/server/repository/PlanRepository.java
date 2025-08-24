@@ -50,7 +50,7 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
         FROM Plans p
         WHERE p.user.id = :friendId
           AND p.deletedAt IS NULL
-          AND p.privacyLevel = 'PUBLIC'
+         AND p.privacyLevel in ('PERSONAL_PUBLIC', 'GROUP_PUBLIC')
           AND p.startTime < :end
           AND p.endTime   >= :start
         ORDER BY p.startTime ASC
@@ -68,7 +68,7 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
     LEFT JOIN p.participants part
     WHERE p.deletedAt IS NULL
       AND (p.user.id = :friendId OR part.user.id = :friendId)
-      AND p.privacyLevel = 'PUBLIC'
+      AND p.privacyLevel in ('PERSONAL_PUBLIC', 'GROUP_PUBLIC')
       AND p.startTime < :endOfWeek
       AND p.endTime   >= :startOfWeek
     ORDER BY p.startTime ASC
@@ -79,7 +79,40 @@ public interface PlanRepository extends JpaRepository<Plans, Long> {
             @Param("endOfWeek") LocalDateTime endOfWeek
     );
 
+    /** 📌 친구 공개 일정 (오늘~+7일, 개인+그룹) */
+    @Query("""
+    SELECT DISTINCT p
+    FROM Plans p
+    LEFT JOIN p.participants part
+    WHERE p.deletedAt IS NULL
+      AND (p.user.id = :friendId OR part.user.id = :friendId)
+      AND p.privacyLevel IN ('PERSONAL_PUBLIC', 'GROUP_PUBLIC')
+      AND p.startTime BETWEEN :now AND :until
+    ORDER BY p.startTime ASC
+""")
+    List<Plans> findFriendPublicPlansWithin7Days(
+            @Param("friendId") Long friendId,
+            @Param("now") LocalDateTime now,
+            @Param("until") LocalDateTime until
+    );
 
+    /** 📌 친구 공개 일정 중 '새로 등록된' 일정 존재 여부 (오늘~+7일) */
+    @Query("""
+    SELECT (COUNT(p) > 0)
+    FROM Plans p
+    LEFT JOIN p.participants part
+    WHERE p.deletedAt IS NULL
+      AND (p.user.id = :friendId OR part.user.id = :friendId)
+      AND p.privacyLevel IN ('PERSONAL_PUBLIC', 'GROUP_PUBLIC')
+      AND p.startTime BETWEEN :now AND :until
+      AND p.createdAt > :lastSeen
+""")
+    boolean existsNewPublicPlansForFriendWithin7Days(
+            @Param("friendId") Long friendId,
+            @Param("now") LocalDateTime now,
+            @Param("until") LocalDateTime until,
+            @Param("lastSeen") LocalDateTime lastSeen
+    );
 
     /** 친구 전체 공개 일정 (개인 + 그룹) */
     @Query("""
