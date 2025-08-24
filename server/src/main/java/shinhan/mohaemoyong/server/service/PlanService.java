@@ -34,9 +34,18 @@ public class PlanService {
         if (req.startTime().isAfter(req.endTime())) {
             throw new IllegalArgumentException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
         }
-        if (Boolean.TRUE.equals(req.hasSavingsGoal()) && req.savingsAmount() == null) {
-            throw new IllegalArgumentException("저축 목표가 있으면 금액을 반드시 입력해야 합니다.");
+        if (Boolean.TRUE.equals(req.hasSavingsGoal())) {
+            if (req.savingsAmount() == null) {
+                throw new IllegalArgumentException("저축 목표가 있으면 금액을 반드시 입력해야 합니다.");
+            }
+            if (req.depositAccountNo() == null || req.depositAccountNo().isBlank()) {
+                throw new IllegalArgumentException("저축 목표가 있으면 입금 계좌를 반드시 입력해야 합니다.");
+            }
+            if (req.withdrawalAccountNo() == null || req.withdrawalAccountNo().isBlank()) {
+                throw new IllegalArgumentException("저축 목표가 있으면 출금 계좌를 반드시 입력해야 합니다.");
+            }
         }
+
         if (req.type() == PlanType.GROUP && (req.participantIds() == null || req.participantIds().isEmpty())) {
             throw new IllegalArgumentException("단체 일정은 초대할 참여자가 필요합니다.");
         }
@@ -68,12 +77,14 @@ public class PlanService {
                     .user(creator)
                     .title(req.title())
                     .content(req.content())
-                    .imageUrl(req.imageUrl())   // ✅ 대표 이미지
+                    .imageUrl(req.imageUrl())
                     .place(req.place())
                     .startTime(oc.start)
                     .endTime(oc.end)
                     .hasSavingsGoal(Boolean.TRUE.equals(req.hasSavingsGoal()))
                     .savingsAmount(req.savingsAmount())
+                    .depositAccountNo(req.depositAccountNo())   // ✅ 추가
+                    .withdrawAccountNo(req.withdrawalAccountNo())
                     .privacyLevel(req.privacyLevel().name())
                     .isCompleted(false)
                     .commentCount(0)
@@ -146,6 +157,8 @@ public class PlanService {
                 req.privacyLevel(),
                 first.isHasSavingsGoal(),
                 first.getSavingsAmount(),
+                first.getDepositAccountNo(),        // ✅ 추가
+                first.getWithdrawAccountNo(),    // ✅ 추가
                 first.getImageUrl(),
                 req.participantIds(),
                 first.getPhotos().stream()
