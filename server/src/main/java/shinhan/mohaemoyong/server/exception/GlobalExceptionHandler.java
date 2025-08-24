@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.adapter.exception.ExceptionResponseDto;
 
@@ -29,6 +30,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponseDto> handleException(Exception e) {
+        if (e instanceof org.springframework.web.server.ResponseStatusException rse) {
+            // 스프링 기본 흐름(or 위의 핸들러)으로 처리되게 그대로 던짐
+            throw rse;
+        }
+
         log.error("처리되지 않은 예외 발생", e); // 스택 트레이스를 모두 보려면 e를 출력
 
         ExceptionResponseDto errorResponse = ExceptionResponseDto.builder()
@@ -37,5 +43,17 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ExceptionResponseDto> handleRSE(ResponseStatusException e) {
+        log.warn("RSE 발생: status={}, reason={}", e.getStatusCode(), e.getReason());
+
+        ExceptionResponseDto body = ExceptionResponseDto.builder()
+                .responseCode(e.getStatusCode().toString())
+                .responseMessage(e.getReason() != null ? e.getReason() : "요청이 거부되었습니다.")
+                .build();
+
+        return new ResponseEntity<>(body, e.getStatusCode());
     }
 }

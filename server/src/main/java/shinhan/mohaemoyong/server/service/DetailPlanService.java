@@ -1,8 +1,10 @@
 package shinhan.mohaemoyong.server.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import shinhan.mohaemoyong.server.domain.PlanPhotos;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.dto.DetailPlanResponse;
@@ -37,7 +39,7 @@ public class DetailPlanService {
             System.out.printf("❌ Access denied: userId=%d -> planId=%d (ownerId=%d, privacyLevel=%s)%n",
                     userPrincipal.getId(), planId, p.getUser().getId(), p.getPrivacyLevel());
 
-            throw new ResourceNotFoundException("Plans", "planId", planId);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Plan not accessible");
         }
 
         // 사진들 조회 (정렬 보장)
@@ -49,10 +51,17 @@ public class DetailPlanService {
 
     @Transactional
     public DetailPlanResponse update(UserPrincipal userPrincipal, Long planId, DetailPlanUpdateRequest req) {
-        Plans p = planRepository.findDetailByOwner(userPrincipal.getId(), planId)
-                .orElseThrow(() -> new ResourceNotFoundException("Plans", "planId/userId", planId + "/" + userPrincipal.getId()));
+        Plans p = planRepository.findDetailById(planId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
 
-        if (p.isDeleted()) throw new ResourceNotFoundException("Plans", "planId", planId);
+        if (p.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found");
+        }
+
+        if (!p.getUser().getId().equals(userPrincipal.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can modify");
+        }
+
         if (req.startTime() != null && req.endTime() != null && req.startTime().isAfter(req.endTime())) {
             throw new IllegalArgumentException("startTime must be before endTime");
         }
@@ -158,42 +167,26 @@ public class DetailPlanService {
         return toResponse(p, photos);
     }
 
-//    @Transactional
-//    public DetailPlanResponse update(UserPrincipal userPrincipal, Long planId, DetailPlanUpdateRequest req) {
-//        Plans p = planRepository.findDetailByOwner(userPrincipal.getId(), planId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Plans", "planId/userId", planId + "/" + userPrincipal.getId()));
-//
-//        if (p.isDeleted()) throw new ResourceNotFoundException("Plans", "planId", planId);
-//        if (req.startTime() != null && req.endTime() != null && req.startTime().isAfter(req.endTime()))
-//            throw new IllegalArgumentException("startTime must be before endTime");
-//
-//        if (req.privacyLevel() != null) {
-//            String normalized = req.privacyLevel().trim().toUpperCase();
-//            if (!PRIVACY_ALLOWED.contains(normalized)) {
-//                throw new IllegalArgumentException("privacyLevel must be one of " + PRIVACY_ALLOWED);
-//            }
-//
-//            req = new DetailPlanUpdateRequest(
-//                    req.title(), req.content(), req.imageUrl(), req.place(),
-//                    req.startTime(), req.endTime(), req.isCompleted(),
-//                    req.hasSavingsGoal(), req.savingsAmount(), normalized
-//            );
-//        }
-//
-//        p.applyUpdate(req, LocalDateTime.now());
-//
-//        // 업데이트 후에도 사진 포함해 응답
-//        List<PlanPhotos> photos = planPhotoRepository
-//                .findByPlan_PlanIdOrderByOrderNoAscPlanPhotoIdAsc(planId);
-//
-//        return toResponse(p, photos);
-//    }
-
     @Transactional
     public void delete(UserPrincipal userPrincipal, Long planId) {
-        Plans p = planRepository.findDetailByOwner(userPrincipal.getId(), planId)
-                .orElseThrow(() -> new ResourceNotFoundException("Plans", "planId/userId", planId + "/" + userPrincipal.getId()));
+        // 1) 존재 확인
+        Plans p = planRepository.findDetailById(planId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
 
+        // 소프트 삭제된 경우도 존재하지 않는 것으로 간주
+        if (p.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found");
+        }
+
+        // 2) 권한 확인 (소유자만 삭제 가능)
+        Long ownerId = p.getUser().getId();
+        if (!ownerId.equals(userPrincipal.getId())) {
+            System.out.printf("❌ Delete denied: userId=%d -> planId=%d (ownerId=%d)%n",
+                    userPrincipal.getId(), planId, ownerId);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can delete");
+        }
+
+        // 3) 삭제 수행
         p.softDelete(LocalDateTime.now());
     }
 
