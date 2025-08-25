@@ -45,12 +45,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             throws IOException, ServletException {
         String targetUrl = determineTargetUrl(request, response, authentication);
         String token = tokenProvider.createToken(authentication);
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
 
         clearAuthenticationAttributes(request, response);
+
+        // 응답 설정
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"token\":\"" + token + "\"}");
+
+        // 최종적으로 바디와 함께 프런트에 응답
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+
     }
 
 
@@ -62,13 +67,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             throw new BadRequestException("Sorry! We've got an Unauthorized Redirect URI and can't proceed with the authentication");
         }
 
-        String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
-
+        // 일단은 테스트 편의를 위해 리다이렉트 주소에도 토큰을 넣어 보내줌
         String token = tokenProvider.createToken(authentication);
-
+        String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", token)
                 .build().toUriString();
+
+        // 이제 토큰을 추가하지 않고, 프론트엔드가 요청한 주소 또는 기본 주소만 반환
+        //return redirectUri.orElse(getDefaultTargetUrl());
+
     }
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
