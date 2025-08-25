@@ -10,6 +10,9 @@ import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.UserService;
 
+import java.util.List;
+
+
 @RequiredArgsConstructor
 @RestController
 public class UserController {
@@ -20,5 +23,10 @@ public class UserController {
     public ResponseEntity<UserResponse> findUserDetail(@CurrentUser UserPrincipal userPrincipal) {
 
         return new ResponseEntity<>(userService.getUserDetail(userPrincipal), HttpStatus.OK);
+    }
+
+    @GetMapping("/api/v1/users")
+    public ResponseEntity<List<UserResponse>> getUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 }
