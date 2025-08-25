@@ -8,6 +8,9 @@ import shinhan.mohaemoyong.server.exception.ResourceNotFoundException;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -20,6 +23,13 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
 
         return UserResponse.toDto(user);
+    }
+
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserResponse::toDto)
+                .collect(Collectors.toList());
     }
 
 
