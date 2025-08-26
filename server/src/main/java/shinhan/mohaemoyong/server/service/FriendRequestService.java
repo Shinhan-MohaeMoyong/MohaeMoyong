@@ -64,7 +64,7 @@ public class FriendRequestService {
                 friendRequestRepository.findByReceiverAndStatus(receiver, FriendRequest.Status.PENDING);
 
         return requests.stream()
-                .map(FriendRequestResponse::from)
+                .map(FriendRequestResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
