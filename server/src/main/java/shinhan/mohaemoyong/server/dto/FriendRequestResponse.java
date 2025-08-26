@@ -18,6 +18,8 @@ public class FriendRequestResponse {
     private String requesterName;
     private Long receiverId;
     private String receiverName;
+    private String receiverImgUrl;
+    private String receiverEmail;
     private String status;
     private String message;
     private Instant createdAt;
@@ -40,6 +42,8 @@ public class FriendRequestResponse {
                 .requesterName(r.getRequester().getName())
                 .receiverId(r.getReceiver().getId())
                 .receiverName(r.getReceiver().getName())
+                .receiverImgUrl(r.getReceiver().getImageUrl())
+                .receiverEmail(r.getReceiver().getEmail())
                 .status(r.getStatus().name())
                 .message(r.getMessage())
                 .createdAt(r.getCreatedAt())
