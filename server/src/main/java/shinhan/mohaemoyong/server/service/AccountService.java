@@ -69,8 +69,8 @@ public class AccountService {
             Long currentBalance = balanceMap.getOrDefault(account.getAccountNumber(), 0L);
             Long targetAmount = account.getTargetAmount();
 
-            // 4-1. 월별 저축액 계산 (금융 API 호출)
-            List<WeeklySavingDto> weeklySavings = calculateWeeklySavings(user.getUserkey(), account.getAccountNumber());
+            // 4-1. 월별 저축액 계산 (수정된 메서드 호출)
+            List<WeeklySavingDto> dailySavings = getDailySavingsForMonth(user.getUserkey(), account.getAccountNumber());
 
             // 4-2. 달성률 계산
             double achievementRate = (targetAmount == null || targetAmount == 0) ? 0.0 : ((double) currentBalance / targetAmount) * 100.0;
@@ -80,7 +80,7 @@ public class AccountService {
                     .accountNumber(account.getAccountNumber())
                     .balance(currentBalance)
                     .accountAlias(account.getAccountName())
-                    .monthlySavings(weeklySavings)
+                    .monthlySavings(dailySavings) // 필드명은 monthlySavings를 그대로 사용
                     .achievementRate(achievementRate)
                     .build();
         }).collect(Collectors.toList());
@@ -89,29 +89,33 @@ public class AccountService {
     /**
      * Helper Method: 특정 계좌의 거래 내역 API를 호출하여 주차별 입금액을 계산
      */
-    private List<WeeklySavingDto> calculateWeeklySavings(String userKey, String accountNumber) {
+    /**
+     * Helper Method: 특정 계좌의 거래 내역 API를 호출하여 이번 달의 일별 입금액 리스트를 반환
+     */
+    private List<WeeklySavingDto> getDailySavingsForMonth(String userKey, String accountNumber) {
         LocalDate today = LocalDate.now();
+        // 조회 기간을 이번 달 1일부터 오늘까지로 설정
         String startDate = today.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String endDate = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         InquireTransactionHistoryListRequestDto requestDto = new InquireTransactionHistoryListRequestDto(
-                accountNumber, startDate, endDate, "M", "ASC" // M: 입금만 조회
+                accountNumber, startDate, endDate, "M", "ASC" // M: 입금만 조회, ASC: 오름차순
         );
 
         InquireTransactionHistoryListResponse historyResponse = demandDepositApiAdapter.inquireTransactionHistoryList(userKey, requestDto);
 
+        // API 응답이 없거나 거래 내역 리스트가 비어있으면 빈 리스트 반환
         if (historyResponse.getREC() == null || historyResponse.getREC().getList() == null) {
             return new ArrayList<>();
         }
 
-        Map<String, Long> weeklySum = historyResponse.getREC().getList().stream()
-                .collect(Collectors.groupingBy(
-                        transaction -> getWeekOfMonth(transaction.getTransactionDate()),
-                        Collectors.summingLong(InquireTransactionHistoryListResponse.Transaction::getTransactionBalance)
-                ));
-
-        return weeklySum.entrySet().stream()
-                .map(entry -> new WeeklySavingDto(entry.getKey(), entry.getValue()))
+        // 거래 내역 리스트를 DailySavingDto 리스트로 변환
+        // API에서 이미 오름차순으로 정렬된 데이터를 주므로, 별도의 정렬은 필요 없음
+        return historyResponse.getREC().getList().stream()
+                .map(transaction -> new WeeklySavingDto(
+                        transaction.getTransactionDate(), // "weekDescription"에 YYYYMMDD 날짜를 넣음
+                        transaction.getTransactionBalance() // "amount"에 거래 금액을 넣음
+                ))
                 .collect(Collectors.toList());
     }
 
