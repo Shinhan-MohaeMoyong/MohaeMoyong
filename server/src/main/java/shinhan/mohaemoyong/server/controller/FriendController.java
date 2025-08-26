@@ -42,7 +42,7 @@ public class FriendController {
     /** 받은 친구 요청 목록 조회 */
     @GetMapping("/requests/inbox")
     public ResponseEntity<List<FriendRequestResponse>> getInbox(@CurrentUser UserPrincipal userPrincipal) {
-        return ResponseEntity.ok(friendRequestService.getSentRequests(userPrincipal));
+        return ResponseEntity.ok(friendRequestService.getReceivedRequests(userPrincipal));
     }
 
     /** 보낸 친구 목록 조회 **/
