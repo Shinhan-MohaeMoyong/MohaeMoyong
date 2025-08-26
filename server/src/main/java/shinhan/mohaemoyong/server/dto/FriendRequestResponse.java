@@ -16,6 +16,7 @@ public class FriendRequestResponse {
     private Long requestId;
     private Long requesterId;
     private String requesterName;
+    private String requesterImgUrl;
     private Long receiverId;
     private String receiverName;
     private String receiverImgUrl;
@@ -34,6 +35,23 @@ public class FriendRequestResponse {
                 .createdAt(request.getCreatedAt())
                 .build();
     }
+
+    public static FriendRequestResponse fromRequest(FriendRequest r) {
+        return FriendRequestResponse.builder()
+                .requestId(r.getRequestId())
+                .requesterId(r.getRequester().getId())
+                .requesterName(r.getRequester().getName())
+                .requesterImgUrl(r.getRequester().getImageUrl())
+                .receiverId(r.getReceiver().getId())
+                .receiverName(r.getReceiver().getName())
+                .receiverImgUrl(r.getReceiver().getImageUrl())
+                .receiverEmail(r.getReceiver().getEmail())
+                .status(r.getStatus().name())
+                .message(r.getMessage())
+                .createdAt(r.getCreatedAt())
+                .build();
+    }
+
 
     public static FriendRequestResponse fromEntity(FriendRequest r) {
         return FriendRequestResponse.builder()
