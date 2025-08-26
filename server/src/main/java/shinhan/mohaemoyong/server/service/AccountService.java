@@ -70,7 +70,7 @@ public class AccountService {
             Long targetAmount = account.getTargetAmount();
 
             // 4-1. 월별 저축액 계산 (수정된 메서드 호출)
-            List<WeeklySavingDto> dailySavings = getDailySavingsForMonth(user.getUserkey(), account.getAccountNumber());
+            List<WeeklySavingDto> dailySavings = getDailySavingsForWeek(user.getUserkey(), account.getAccountNumber());
 
             // 4-2. 달성률 계산
             double achievementRate = (targetAmount == null || targetAmount == 0) ? 0.0 : ((double) currentBalance / targetAmount) * 100.0;
@@ -92,10 +92,10 @@ public class AccountService {
     /**
      * Helper Method: 특정 계좌의 거래 내역 API를 호출하여 이번 달의 일별 입금액 리스트를 반환
      */
-    private List<WeeklySavingDto> getDailySavingsForMonth(String userKey, String accountNumber) {
+    private List<WeeklySavingDto> getDailySavingsForWeek(String userKey, String accountNumber) {
         LocalDate today = LocalDate.now();
-        // 조회 기간을 이번 달 1일부터 오늘까지로 설정
-        String startDate = today.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        // 조회 기간을 일주일 전부터 오늘까지로 설정
+        String startDate = today.minusDays(6).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String endDate = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         InquireTransactionHistoryListRequestDto requestDto = new InquireTransactionHistoryListRequestDto(
