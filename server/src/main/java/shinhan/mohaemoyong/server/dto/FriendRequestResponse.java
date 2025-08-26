@@ -15,7 +15,6 @@ import static org.springframework.web.servlet.function.ServerResponse.status;
 public class FriendRequestResponse {
     private Long requestId;
     private Long requesterId;
-    private String requesterName;
     private String requesterImgUrl;
     private String requesterName;
     private Long receiverId;
@@ -52,7 +51,6 @@ public class FriendRequestResponse {
                 .createdAt(r.getCreatedAt())
                 .build();
     }
-
 
     public static FriendRequestResponse fromEntity(FriendRequest r) {
         return FriendRequestResponse.builder()
