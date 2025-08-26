@@ -26,6 +26,7 @@ AND NOT EXISTS (
     SELECT 1 FROM FriendRequest fr
     WHERE fr.requester.id = :myId
       AND fr.receiver.id = u.id
+      AND fr.isActive = true
 )
 
 AND NOT EXISTS (
@@ -40,6 +41,4 @@ AND (:query IS NULL OR :query = ''
 """)
     List<User> searchAvailableUsers(@Param("myId") Long myId,
                                     @Param("query") String query);
-
-
 }
