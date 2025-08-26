@@ -85,4 +85,15 @@ public class FriendController {
         friendService.deleteFriend(userPrincipal.getId(), friendId);
         return ResponseEntity.ok("친구가 삭제되었습니다.");
     }
+
+    /** 친구 요청 검색 (자기 자신/보낸 요청/이미 친구 제외) */
+    @GetMapping("/search")
+    public ResponseEntity<List<FriendResponse>> searchUsers(
+            @CurrentUser UserPrincipal userPrincipal,
+            @RequestParam(required = false, defaultValue = "") String q
+    ) {
+        List<FriendResponse> results = friendService.searchAvailableUsers(userPrincipal.getId(), q);
+        return ResponseEntity.ok(results);
+    }
+
 }
