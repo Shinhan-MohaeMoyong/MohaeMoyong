@@ -15,6 +15,7 @@ import static org.springframework.web.servlet.function.ServerResponse.status;
 public class FriendRequestResponse {
     private Long requestId;
     private Long requesterId;
+    private String requesterImgUrl;
     private String requesterName;
     private Long receiverId;
     private String receiverName;
@@ -32,6 +33,20 @@ public class FriendRequestResponse {
                 .status(request.getStatus().name())
                 .message(request.getMessage())
                 .createdAt(request.getCreatedAt())
+                .build();
+    }
+
+    public static FriendRequestResponse fromRequest(FriendRequest r) {
+        return FriendRequestResponse.builder()
+                .requestId(r.getRequestId())
+                .requesterId(r.getRequester().getId())
+                .requesterName(r.getRequester().getName())
+                .requesterImgUrl(r.getReceiver().getImageUrl())
+                .receiverId(r.getReceiver().getId())
+                .receiverName(r.getReceiver().getName())
+                .status(r.getStatus().name())
+                .message(r.getMessage())
+                .createdAt(r.getCreatedAt())
                 .build();
     }
 
