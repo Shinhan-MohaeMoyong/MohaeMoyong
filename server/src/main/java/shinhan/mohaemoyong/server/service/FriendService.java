@@ -1,6 +1,7 @@
 package shinhan.mohaemoyong.server.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.domain.Friendship;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FriendService {
 
     private final FriendshipRepository friendshipRepository;
@@ -56,6 +58,17 @@ public class FriendService {
         }
 
         friendshipRepository.deletePair(user, friend);
+    }
+
+    //친구 요청 검색 창
+    public List<FriendResponse> searchAvailableUsers(Long myId, String query) {
+        log.info("searchAvailableUsers myId = {}", myId);
+        log.info("searchAvailableUsers query = {}", query);
+
+        List<User> users = userRepository.searchAvailableUsers(myId, query);
+        return users.stream()
+                .map(FriendResponse::from) // FriendResponse DTO 변환
+                .toList();
     }
 
 }
