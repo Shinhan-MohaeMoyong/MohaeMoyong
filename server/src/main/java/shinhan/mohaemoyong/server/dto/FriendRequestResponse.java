@@ -7,6 +7,8 @@ import shinhan.mohaemoyong.server.domain.FriendRequest;
 
 import java.time.Instant;
 
+import static org.springframework.web.servlet.function.ServerResponse.status;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -14,6 +16,8 @@ public class FriendRequestResponse {
     private Long requestId;
     private Long requesterId;
     private String requesterName;
+    private Long receiverId;
+    private String receiverName;
     private String status;
     private String message;
     private Instant createdAt;
@@ -26,6 +30,19 @@ public class FriendRequestResponse {
                 .status(request.getStatus().name())
                 .message(request.getMessage())
                 .createdAt(request.getCreatedAt())
+                .build();
+    }
+
+    public static FriendRequestResponse fromEntity(FriendRequest r) {
+        return FriendRequestResponse.builder()
+                .requestId(r.getRequestId())
+                .requesterId(r.getRequester().getId())
+                .requesterName(r.getRequester().getName())
+                .receiverId(r.getReceiver().getId())
+                .receiverName(r.getReceiver().getName())
+                .status(r.getStatus().name())
+                .message(r.getMessage())
+                .createdAt(r.getCreatedAt())
                 .build();
     }
 }

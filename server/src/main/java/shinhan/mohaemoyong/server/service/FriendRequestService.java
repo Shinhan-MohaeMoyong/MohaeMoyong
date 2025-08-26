@@ -68,6 +68,16 @@ public class FriendRequestService {
                 .collect(Collectors.toList());
     }
 
+    /** 보낸 요청 목록 조회 */
+    @Transactional(readOnly = true)
+    public List<FriendRequestResponse> getSentRequests(UserPrincipal userPrincipal) {
+        var requests = friendRequestRepository.findByRequester_IdAndIsActiveTrue(userPrincipal.getId());
+        return requests.stream()
+                .map(FriendRequestResponse::fromEntity)   // from() 말고 fromEntity로 통일 권장
+                .toList();
+    }
+
+
     /** 친구 요청 수락 */
     @Transactional
     public FriendResponse acceptRequest(Long userId, Long requestId) {
