@@ -129,6 +129,7 @@ public class FriendRequestService {
 
         request.setStatus(FriendRequest.Status.DECLINED);
         request.setRespondedAt(Instant.now());
+        request.setIsActive(false);
         friendRequestRepository.save(request);
     }
 
