@@ -8,5 +8,9 @@ import java.util.List;
 
 public interface FriendRequestRepository extends JpaRepository<FriendRequest, Long> {
     boolean existsByRequesterAndReceiverAndStatus(User requester, User receiver, FriendRequest.Status status);
+
     List<FriendRequest> findByReceiverAndStatus(User receiver, FriendRequest.Status status);
+
+    // 내가 보낸 요청 목록
+    List<FriendRequest> findByRequester_IdAndIsActiveTrue(Long requesterId);
 }
