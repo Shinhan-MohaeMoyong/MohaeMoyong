@@ -94,29 +94,41 @@ public class AccountService {
      */
     private List<WeeklySavingDto> getDailySavingsForWeek(String userKey, String accountNumber) {
         LocalDate today = LocalDate.now();
-        // 조회 기간을 일주일 전부터 오늘까지로 설정
-        String startDate = today.minusDays(6).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String endDate = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String startDate = today.minusDays(6).format(formatter);
+        String endDate = today.format(formatter);
 
         InquireTransactionHistoryListRequestDto requestDto = new InquireTransactionHistoryListRequestDto(
-                accountNumber, startDate, endDate, "M", "ASC" // M: 입금만 조회, ASC: 오름차순
+                accountNumber, startDate, endDate, "M", "ASC"
         );
 
         InquireTransactionHistoryListResponse historyResponse = demandDepositApiAdapter.inquireTransactionHistoryList(userKey, requestDto);
 
-        // API 응답이 없거나 거래 내역 리스트가 비어있으면 빈 리스트 반환
-        if (historyResponse.getREC() == null || historyResponse.getREC().getList() == null) {
-            return new ArrayList<>();
+        // 1. API 응답 결과를 날짜별 입금액 합계 Map으로 변환
+        Map<String, Long> dailySumMap;
+        if (historyResponse.getREC() != null && historyResponse.getREC().getList() != null) {
+            dailySumMap = historyResponse.getREC().getList().stream()
+                    .collect(Collectors.groupingBy(
+                            InquireTransactionHistoryListResponse.Transaction::getTransactionDate,
+                            Collectors.summingLong(InquireTransactionHistoryListResponse.Transaction::getTransactionBalance)
+                    ));
+        } else {
+            dailySumMap = new HashMap<>(); // 비어있는 맵 생성
         }
 
-        // 거래 내역 리스트를 DailySavingDto 리스트로 변환
-        // API에서 이미 오름차순으로 정렬된 데이터를 주므로, 별도의 정렬은 필요 없음
-        return historyResponse.getREC().getList().stream()
-                .map(transaction -> new WeeklySavingDto(
-                        transaction.getTransactionDate(), // "weekDescription"에 YYYYMMDD 날짜를 넣음
-                        transaction.getTransactionBalance() // "amount"에 거래 금액을 넣음
-                ))
-                .collect(Collectors.toList());
+        // 2. 최근 7일간의 날짜 리스트를 생성
+        List<WeeklySavingDto> weeklySavings = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            String yyyymmdd = date.format(formatter);
+
+            // 3. 해당 날짜의 입금액을 Map에서 조회 (없으면 0L)
+            Long amount = dailySumMap.getOrDefault(yyyymmdd, 0L);
+
+            weeklySavings.add(new WeeklySavingDto(yyyymmdd, amount));
+        }
+
+        return weeklySavings;
     }
 
     /**
