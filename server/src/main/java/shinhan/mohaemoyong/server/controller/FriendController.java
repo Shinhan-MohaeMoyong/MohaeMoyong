@@ -36,7 +36,7 @@ public class FriendController {
             @RequestBody FriendRequestDto dto) {
 
         FriendRequest request = friendRequestService.sendRequest(userPrincipal, dto);
-        return new ResponseEntity<>(FriendRequestResponse.from(request), HttpStatus.CREATED);
+        return new ResponseEntity<>(FriendRequestResponse.fromRequest(request), HttpStatus.CREATED);
     }
 
     /** 받은 친구 요청 목록 조회 */

@@ -50,7 +50,6 @@ public class FriendRequestService {
         request.setRequester(requester);
         request.setReceiver(receiver);
         request.setMessage(dto.getMessage());
-
         return friendRequestRepository.save(request);
     }
 
@@ -68,12 +67,14 @@ public class FriendRequestService {
                 .collect(Collectors.toList());
     }
 
-    /** 보낸 요청 목록 조회 */
+    /** 보낸 요청 목록 조회 (PENDING만) */
     @Transactional(readOnly = true)
     public List<FriendRequestResponse> getSentRequests(UserPrincipal userPrincipal) {
-        var requests = friendRequestRepository.findByRequester_IdAndIsActiveTrue(userPrincipal.getId());
+        List<FriendRequest> requests =
+                friendRequestRepository.findByRequester_IdAndStatus(userPrincipal.getId(), FriendRequest.Status.PENDING);
+
         return requests.stream()
-                .map(FriendRequestResponse::fromEntity)   // from() 말고 fromEntity로 통일 권장
+                .map(FriendRequestResponse::fromRequest)
                 .toList();
     }
 
