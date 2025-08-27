@@ -14,6 +14,7 @@ import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.AccountCreateRequest;
+import shinhan.mohaemoyong.server.dto.DepositRequest;
 import shinhan.mohaemoyong.server.dto.SearchAccountResponseDto;
 import shinhan.mohaemoyong.server.dto.WeeklySavingDto;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
@@ -169,16 +170,18 @@ public class AccountService {
     }
 
     @Transactional
-    public void deposit(UserPrincipal userPrincipal, Long planId) {
+    public void deposit(UserPrincipal userPrincipal, Long planId, DepositRequest request) {
         Plans plans = planRepository.findById(planId).orElseThrow(() ->
                 new IllegalArgumentException("존재하지 않는 일정입니다."));
 
         String userkey = userPrincipal.getUserkey();
 
         String depositAccountNo = plans.getDepositAccountNo();
-        String withdrawAccountNo = plans.getWithdrawAccountNo();
         Long balance = Long.valueOf(plans.getSavingsAmount());
         String summary = plans.getTitle();
+
+        // 사용자로 부터 입력받은 출금 계좌 번호
+        String withdrawAccountNo = request.getWithdrawAccountNo();
 
         try {
             // 1. API를 통한 계좌 이체를 시도합니다.

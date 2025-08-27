@@ -57,9 +57,9 @@ public class AccountController {
     }
 
     @PostMapping("/deposit/{planId}")
-    public ResponseEntity<String> deposit(@CurrentUser UserPrincipal userPrincipal, @PathVariable("planId") Long planId) {
+    public ResponseEntity<String> deposit(@CurrentUser UserPrincipal userPrincipal, @PathVariable("planId") Long planId, @RequestBody DepositRequest request) {
         // try-catch 없이 서비스 로직만 호출
-        accountService.deposit(userPrincipal, planId);
+        accountService.deposit(userPrincipal, planId, request);
         return new ResponseEntity<>("자동 이체가 성공적으로 완료되었습니다.", HttpStatus.OK);
     }
 }
