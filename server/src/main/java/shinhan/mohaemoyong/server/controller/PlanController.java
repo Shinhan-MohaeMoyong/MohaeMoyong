@@ -8,10 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import shinhan.mohaemoyong.server.domain.User;
-import shinhan.mohaemoyong.server.dto.DetailOneDayPlanResponse;
-import shinhan.mohaemoyong.server.dto.DetailPlanResponse;
-import shinhan.mohaemoyong.server.dto.PlanCreateRequest;
-import shinhan.mohaemoyong.server.dto.PlanCreateResponse;
+import shinhan.mohaemoyong.server.dto.*;
 import shinhan.mohaemoyong.server.oauth2.security.CurrentUser;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.service.PlanService;
@@ -50,5 +47,12 @@ public class PlanController {
         Long userId = userPrincipal.getId();
         List<DetailOneDayPlanResponse> plans = planService.selectPlansByDate(date, userId);
         return new ResponseEntity<>(plans, HttpStatus.OK);
+    }
+
+    @PostMapping("/complete/{planId}")
+    public ResponseEntity<String> complete(@CurrentUser UserPrincipal userPrincipal, @PathVariable("planId") Long planId) {
+        // try-catch 없이 서비스 로직만 호출
+        planService.complete(userPrincipal, planId);
+        return new ResponseEntity<>("일정이 완료되었습니다.", HttpStatus.OK);
     }
 }

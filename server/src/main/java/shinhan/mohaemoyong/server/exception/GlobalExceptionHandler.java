@@ -21,9 +21,19 @@ public class GlobalExceptionHandler {
                 .responseMessage(e.getErrorMessage())
                 .build();
 
-        HttpStatus status = "A1014".equals(e.getErrorCode())
-                ? HttpStatus.BAD_REQUEST // 400
-                : HttpStatus.INTERNAL_SERVER_ERROR; // 500
+        // 에러 코드에 따라 적절한 HTTP 상태 코드를 반환
+        HttpStatus status;
+        switch (e.getErrorCode()) {
+            case "E001": // 권한 없음
+                status = HttpStatus.FORBIDDEN; // 403
+                break;
+            case "A1014": // 특정 금융 API 에러
+                status = HttpStatus.BAD_REQUEST; // 400
+                break;
+            default:
+                status = HttpStatus.INTERNAL_SERVER_ERROR; // 500
+                break;
+        }
 
         return new ResponseEntity<>(errorResponse, status);
     }
@@ -44,6 +54,8 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ExceptionResponseDto> handleRSE(ResponseStatusException e) {

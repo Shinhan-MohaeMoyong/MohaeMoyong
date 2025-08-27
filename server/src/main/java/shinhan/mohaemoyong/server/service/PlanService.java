@@ -3,11 +3,13 @@ package shinhan.mohaemoyong.server.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.domain.PlanPhotos;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.PlanParticipants;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.*;
+import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.FriendshipRepository;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
@@ -268,6 +270,20 @@ public class PlanService {
         return foundPlans.stream()
                 .map(DetailOneDayPlanResponse::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void complete(UserPrincipal userPrincipal, Long planId) {
+        Plans plans = planRepository.findById(planId).orElseThrow(() ->
+                new IllegalArgumentException("존재하지 않는 일정입니다."));
+
+        Long userId = userPrincipal.getId();
+
+        if (Objects.equals(plans.getUser().getId(), userId)) {
+            plans.isCompletedUpdate();
+        } else { // 현재 로그인된 사용자가 해당 일정을 등록한 사용자가 아님
+            throw new ApiErrorException("E001","권한이 없습니다.");
+        }
     }
 
 
