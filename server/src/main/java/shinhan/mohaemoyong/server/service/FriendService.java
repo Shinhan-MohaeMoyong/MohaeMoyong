@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import shinhan.mohaemoyong.server.domain.FriendRequest;
 import shinhan.mohaemoyong.server.domain.Friendship;
 import shinhan.mohaemoyong.server.domain.User;
 import shinhan.mohaemoyong.server.dto.FriendResponse;
@@ -53,11 +54,17 @@ public class FriendService {
         User friend = userRepository.findById(friendId)
                 .orElseThrow(() -> new IllegalArgumentException("Friend not found"));
 
-        if (!friendshipRepository.existsByUserAndFriend(user, friend)) {
+        // ✅ 양방향 존재 여부로 체크
+        if (!friendshipRepository.existsFriendEdge(userId, friendId)) {
             throw new IllegalStateException("친구 관계가 존재하지 않습니다.");
         }
 
+        // 1) 친구 관계 양방향 삭제
         friendshipRepository.deletePair(user, friend);
+
+        // 2) 두 사람 사이의 모든 친구요청 비활성/취소 (또는 물리삭제)
+        friendRequestRepository.cancelAllBetweenByIds(userId, friendId, FriendRequest.Status.CANCELED);
+        // friendRequestRepository.deleteAllBetween(user, friend); // 물리삭제를 원하면 이걸 사용
     }
 
     //친구 요청 검색 창
