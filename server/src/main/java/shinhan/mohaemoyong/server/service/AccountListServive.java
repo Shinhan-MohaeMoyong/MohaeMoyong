@@ -8,6 +8,7 @@ import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepo
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
 import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.dto.AccountDetailResponse;
+import shinhan.mohaemoyong.server.dto.AccountNoRequest;
 import shinhan.mohaemoyong.server.dto.SimpleAccountListResponse;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.AccountRepository;
@@ -63,8 +64,10 @@ public class AccountListServive {
     }
 
     @Transactional(readOnly = true)
-    public AccountDetailResponse getAccountDetails(UserPrincipal userPrincipal, String accountNo) {
+    public AccountDetailResponse getAccountDetails(UserPrincipal userPrincipal, AccountNoRequest request) {
+
         String userKey = userPrincipal.getUserkey();
+        String accountNo = request.getAccountNo();
 
         // 1. 우리 DB에서 계좌 정보를 조회합니다.
         Accounts account = accountRepository.findByAccountNumber(accountNo)

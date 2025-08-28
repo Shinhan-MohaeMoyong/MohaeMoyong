@@ -51,8 +51,8 @@ public class AccountController {
 
 
     @GetMapping("/detail")
-    public ResponseEntity<AccountDetailResponse> getAccountDetails(@CurrentUser UserPrincipal userPrincipal, @RequestBody String accountNo) {
-        AccountDetailResponse response = accountListServive.getAccountDetails(userPrincipal, accountNo);
+    public ResponseEntity<AccountDetailResponse> getAccountDetails(@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountNoRequest request) {
+        AccountDetailResponse response = accountListServive.getAccountDetails(userPrincipal, request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
