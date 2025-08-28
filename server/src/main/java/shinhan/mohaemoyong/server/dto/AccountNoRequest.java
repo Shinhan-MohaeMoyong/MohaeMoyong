@@ -5,8 +5,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class AccountUpdateRequest {
+public class AccountNoRequest {
     private String accountNo;
-    private Long targetAmount;
-    private String accountAlias;
 }
+

@@ -50,8 +50,8 @@ public class AccountController {
     }
 
 
-    @GetMapping("/{accountNo}")
-    public ResponseEntity<AccountDetailResponse> getAccountDetails(@CurrentUser UserPrincipal userPrincipal, @PathVariable("accountNo") String accountNo) {
+    @GetMapping("/detail")
+    public ResponseEntity<AccountDetailResponse> getAccountDetails(@CurrentUser UserPrincipal userPrincipal, @RequestBody String accountNo) {
         AccountDetailResponse response = accountListServive.getAccountDetails(userPrincipal, accountNo);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -63,17 +63,15 @@ public class AccountController {
         return new ResponseEntity<>("자동 이체가 성공적으로 완료되었습니다.", HttpStatus.OK);
     }
 
-    @PatchMapping("/{accountNo}/targetAmount")
-    public ResponseEntity<?> updateTargetAmount(@CurrentUser UserPrincipal userPrincipal, @PathVariable("accountNo") String accountNo,
-                                                                    @RequestBody AccountUpdateRequest request) {
-        accountService.updateTargetAmount(userPrincipal, accountNo, request);
+    @PatchMapping("/targetAmount")
+    public ResponseEntity<?> updateTargetAmount(@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountUpdateRequest request) {
+        accountService.updateTargetAmount(userPrincipal, request);
         return new ResponseEntity<>("수정완료", HttpStatus.OK);
     }
 
-    @PatchMapping("/{accountNo}/accountAlias")
-    public ResponseEntity<?> updateAlias(@CurrentUser UserPrincipal userPrincipal, @PathVariable("accountNo") String accountNo,
-                                                             @RequestBody AccountUpdateRequest request) {
-        accountService.updateAlias(userPrincipal, accountNo, request);
+    @PatchMapping("/accountAlias")
+    public ResponseEntity<?> updateAlias(@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountUpdateRequest request) {
+        accountService.updateAlias(userPrincipal, request);
         return new ResponseEntity<>("수정완료", HttpStatus.OK);
     }
 

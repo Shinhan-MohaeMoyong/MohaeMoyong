@@ -200,13 +200,13 @@ public class AccountService {
     }
 
     @Transactional
-    public void updateTargetAmount(UserPrincipal userPrincipal, String accountNo, AccountUpdateRequest request) {
+    public void updateTargetAmount(UserPrincipal userPrincipal, AccountUpdateRequest request) {
         Long userId = userPrincipal.getId();
 
-        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(accountNo);
+        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(request.getAccountNo());
 
         Accounts account = accounts0.orElseThrow(() ->
-                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + accountNo)
+                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + request.getAccountNo())
         );
 
         if (Objects.equals(account.getUser().getId(), userId)) {
@@ -218,13 +218,13 @@ public class AccountService {
     }
 
     @Transactional
-    public void updateAlias(UserPrincipal userPrincipal, String accountNo, AccountUpdateRequest request) {
+    public void updateAlias(UserPrincipal userPrincipal, AccountUpdateRequest request) {
         Long userId = userPrincipal.getId();
 
-        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(accountNo);
+        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(request.getAccountNo());
 
         Accounts account = accounts0.orElseThrow(() ->
-                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + accountNo)
+                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + request.getAccountNo())
         );
 
         if (Objects.equals(account.getUser().getId(), userId)) {
