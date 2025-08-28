@@ -50,7 +50,7 @@ public class AccountController {
     }
 
 
-    @GetMapping("/detail")
+    @PostMapping("/detail")
     public ResponseEntity<AccountDetailResponse> getAccountDetails(@CurrentUser UserPrincipal userPrincipal, @RequestBody String accountNo) {
         AccountDetailResponse response = accountListServive.getAccountDetails(userPrincipal, accountNo);
         return new ResponseEntity<>(response, HttpStatus.OK);
