@@ -15,7 +15,6 @@ public record PlanCreateResponse(
         Boolean hasSavingsGoal,
         Integer savingsAmount,
         String depositAccountNo,        // ✅ 추가
-        String withdrawalAccountNo,     // ✅ 추가
         String imageUrl,
         List<Long> participantIds,
         List<String> photos,
