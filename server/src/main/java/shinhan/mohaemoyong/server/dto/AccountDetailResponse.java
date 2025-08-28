@@ -16,6 +16,7 @@ public class AccountDetailResponse {
     private String accountNo;
     private Long accountBalance;
     private String accountName;
+    private Long targetAmount;
     private List<TransactionRecord> list;
 
     /**
@@ -42,6 +43,7 @@ public class AccountDetailResponse {
         return AccountDetailResponse.builder()
                 .accountNo(ourAccount.getAccountNumber())
                 .accountBalance(currentBalance)
+                .targetAmount(ourAccount.getTargetAmount())
                 .accountName(ourAccount.getAccountName())
                 .list(transactionRecords)
                 .build();
