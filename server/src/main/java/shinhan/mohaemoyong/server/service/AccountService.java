@@ -83,6 +83,7 @@ public class AccountService {
                     .accountAlias(account.getAccountName())
                     .monthlySavings(dailySavings) // 필드명은 monthlySavings를 그대로 사용
                     .achievementRate(achievementRate)
+                    .targetAmount(targetAmount)
                     .build();
         }).collect(Collectors.toList());
     }
