@@ -59,4 +59,8 @@ public class Accounts {
 
     // 내부 전용
     void setUserInternal(User user) { this.user = user; }
+
+    public void updateTargetAmount(Long targetAmount) { this.targetAmount = targetAmount; }
+
+    public void updateAlias(String alias) { this.accountName = alias; }
 }
