@@ -62,4 +62,19 @@ public class AccountController {
         accountService.deposit(userPrincipal, planId, request);
         return new ResponseEntity<>("자동 이체가 성공적으로 완료되었습니다.", HttpStatus.OK);
     }
+
+    @PatchMapping("/{accountNo}/targetAmount")
+    public ResponseEntity<?> updateTargetAmount(@CurrentUser UserPrincipal userPrincipal, @PathVariable("accountNo") String accountNo,
+                                                                    @RequestBody AccountUpdateRequest request) {
+        accountService.updateTargetAmount(userPrincipal, accountNo, request);
+        return new ResponseEntity<>("수정완료", HttpStatus.OK);
+    }
+
+    @PatchMapping("/{accountNo}/accountAlias")
+    public ResponseEntity<?> updateAlias(@CurrentUser UserPrincipal userPrincipal, @PathVariable("accountNo") String accountNo,
+                                                             @RequestBody AccountUpdateRequest request) {
+        accountService.updateAlias(userPrincipal, accountNo, request);
+        return new ResponseEntity<>("수정완료", HttpStatus.OK);
+    }
+
 }

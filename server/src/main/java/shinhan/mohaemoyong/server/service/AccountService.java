@@ -1,5 +1,6 @@
 package shinhan.mohaemoyong.server.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,7 @@ import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.domain.Plans;
 import shinhan.mohaemoyong.server.domain.User;
-import shinhan.mohaemoyong.server.dto.AccountCreateRequest;
-import shinhan.mohaemoyong.server.dto.DepositRequest;
-import shinhan.mohaemoyong.server.dto.SearchAccountResponseDto;
-import shinhan.mohaemoyong.server.dto.WeeklySavingDto;
+import shinhan.mohaemoyong.server.dto.*;
 import shinhan.mohaemoyong.server.oauth2.security.UserPrincipal;
 import shinhan.mohaemoyong.server.repository.AccountRepository;
 import shinhan.mohaemoyong.server.repository.PlanRepository;
@@ -27,11 +25,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.HashMap;
+
 /**
  * 계좌 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
@@ -200,6 +196,41 @@ public class AccountService {
             // 4. 잡은 예외를 다시 던져서 트랜잭션을 롤백시키고,
             //    컨트롤러가 이 예외를 받아 클라이언트에게 적절한 에러 응답을 보내도록 합니다.
             throw e;
+        }
+    }
+
+    @Transactional
+    public void updateTargetAmount(UserPrincipal userPrincipal, String accountNo, AccountUpdateRequest request) {
+        Long userId = userPrincipal.getId();
+
+        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(accountNo);
+
+        Accounts account = accounts0.orElseThrow(() ->
+                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + accountNo)
+        );
+
+        if (Objects.equals(account.getUser().getId(), userId)) {
+            account.updateTargetAmount(request.getTargetAmount()); // 변경 감지
+        } else { // 현재 로그인된 사용자가 해당 계좌를 등록한 사용자가 아님
+            throw new ApiErrorException("E001","권한이 없습니다.");
+        }
+
+    }
+
+    @Transactional
+    public void updateAlias(UserPrincipal userPrincipal, String accountNo, AccountUpdateRequest request) {
+        Long userId = userPrincipal.getId();
+
+        Optional<Accounts> accounts0 = accountsRepository.findByAccountNumber(accountNo);
+
+        Accounts account = accounts0.orElseThrow(() ->
+                new EntityNotFoundException("해당 계좌 번호를 찾을 수 없습니다: " + accountNo)
+        );
+
+        if (Objects.equals(account.getUser().getId(), userId)) {
+            account.updateAlias(request.getAccountAlias()); // 변경 감지
+        } else { // 현재 로그인된 사용자가 해당 계좌를 등록한 사용자가 아님
+            throw new ApiErrorException("E001","권한이 없습니다.");
         }
     }
 }
