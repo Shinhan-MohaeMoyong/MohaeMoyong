@@ -43,9 +43,7 @@ public class PlanService {
             if (req.depositAccountNo() == null || req.depositAccountNo().isBlank()) {
                 throw new IllegalArgumentException("저축 목표가 있으면 입금 계좌를 반드시 입력해야 합니다.");
             }
-            if (req.withdrawalAccountNo() == null || req.withdrawalAccountNo().isBlank()) {
-                throw new IllegalArgumentException("저축 목표가 있으면 출금 계좌를 반드시 입력해야 합니다.");
-            }
+
         }
 
         if (req.type() == PlanType.GROUP && (req.participantIds() == null || req.participantIds().isEmpty())) {
@@ -86,8 +84,7 @@ public class PlanService {
                     .hasSavingsGoal(Boolean.TRUE.equals(req.hasSavingsGoal()))
                     .savingsAmount(req.savingsAmount())
                     .depositAccountNo(req.depositAccountNo())   // ✅ 추가
-                    .withdrawAccountNo(req.withdrawalAccountNo())
-                    .privacyLevel(req.privacyLevel().name())
+                        .privacyLevel(req.privacyLevel().name())
                     .isCompleted(false)
                     .commentCount(0)
                     .seriesId(seriesId)
@@ -160,7 +157,6 @@ public class PlanService {
                 first.isHasSavingsGoal(),
                 first.getSavingsAmount(),
                 first.getDepositAccountNo(),        // ✅ 추가
-                first.getWithdrawAccountNo(),    // ✅ 추가
                 first.getImageUrl(),
                 req.participantIds(),
                 first.getPhotos().stream()

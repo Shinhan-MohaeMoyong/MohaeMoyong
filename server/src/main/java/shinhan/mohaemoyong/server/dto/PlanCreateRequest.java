@@ -24,7 +24,6 @@ public record PlanCreateRequest(
         @Positive Integer savingsAmount,       // hasSavingsGoal=true일 때 필수
 
         String depositAccountNo,               // 입금 계좌 (hasSavingsGoal=true 시 필수)
-        String withdrawalAccountNo,            // 출금 계좌 (hasSavingsGoal=true 시 필수)
 
         List<Long> participantIds,             // GROUP일 때만 사용
 
@@ -44,8 +43,5 @@ public record PlanCreateRequest(
         return !Boolean.TRUE.equals(hasSavingsGoal) || (depositAccountNo != null && !depositAccountNo.isBlank());
     }
 
-    @AssertTrue(message = "hasSavingsGoal=true일 경우 withdrawalAccountNo를 입력해야 합니다.")
-    public boolean isWithdrawalAccountValid() {
-        return !Boolean.TRUE.equals(hasSavingsGoal) || (withdrawalAccountNo != null && !withdrawalAccountNo.isBlank());
-    }
+
 }
