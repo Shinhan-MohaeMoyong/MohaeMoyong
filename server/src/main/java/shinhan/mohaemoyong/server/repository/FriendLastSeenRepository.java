@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface FriendLastSeenRepository extends JpaRepository<FriendLastSeen, Long> {
 
-    Optional<FriendLastSeen> findByUserIdAndFriendId(Long userId, Long friendId);
+    Optional<FriendLastSeen> findFirstByUserIdAndFriendIdOrderByIdDesc(Long userId, Long friendId);
 
 }
