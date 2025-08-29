@@ -7,12 +7,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "friend_last_seen", // 실제 테이블 이름에 맞게 확인하세요.
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"userId", "friendId"}) // 실제 필드명 확인!
-        }
-)
 @Getter
 @NoArgsConstructor
 public class FriendLastSeen {

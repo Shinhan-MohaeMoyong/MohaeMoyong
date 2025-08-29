@@ -45,7 +45,7 @@ public class FriendPlanService {
         LocalDateTime until = now.plusDays(7);
 
         LocalDateTime lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(viewerId, friendId)
+                .findFirstByUserIdAndFriendIdOrderByIdDesc(viewerId, friendId)
                 .map(FriendLastSeen::getLastSeenAt)
                 .orElse(LocalDateTime.of(1970,1,1,0,0));
 
@@ -60,7 +60,7 @@ public class FriendPlanService {
         ensureFriendship(userId, friendId);
 
         FriendLastSeen lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(userId, friendId)
+                .findFirstByUserIdAndFriendIdOrderByIdDesc(userId, friendId)
                 .orElse(new FriendLastSeen(userId, friendId, LocalDateTime.now()));
 
         lastSeen.updateLastSeen(LocalDateTime.now());
@@ -78,7 +78,7 @@ public class FriendPlanService {
         List<Plans> plans = planRepository.findFriendPublicPlansWithin7Days(friendId, now, until);
 
         LocalDateTime lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(viewerId, friendId)
+                .findFirstByUserIdAndFriendIdOrderByIdDesc(viewerId, friendId)
                 .map(FriendLastSeen::getLastSeenAt)
                 .orElse(LocalDateTime.of(1970,1,1,0,0));
 
@@ -95,7 +95,7 @@ public class FriendPlanService {
 
         // ✅ 조회 후 자동 seen 처리
         FriendLastSeen entity = lastSeenRepository
-                .findByUserIdAndFriendId(viewerId, friendId)
+                .findFirstByUserIdAndFriendIdOrderByIdDesc(viewerId, friendId)
                 .orElse(new FriendLastSeen(viewerId, friendId, LocalDateTime.of(1970,1,1,0,0)));
         entity.updateLastSeen(LocalDateTime.now(ZONE));
         lastSeenRepository.save(entity);
@@ -123,7 +123,7 @@ public class FriendPlanService {
 
         // ✅ 조회 후 자동 seen 처리
         FriendLastSeen lastSeen = lastSeenRepository
-                .findByUserIdAndFriendId(viewerId, friendId)
+                .findFirstByUserIdAndFriendIdOrderByIdDesc(viewerId, friendId)
                 .orElse(new FriendLastSeen(viewerId, friendId, LocalDateTime.now()));
         lastSeen.updateLastSeen(LocalDateTime.now());
         lastSeenRepository.save(lastSeen);
