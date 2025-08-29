@@ -71,7 +71,7 @@ public class Accounts {
 
     public void updateAlias(String alias) { this.accountName = alias; }
 
-    public void updateIsAuthCalled() {
-        this.isAuthCalled = true;
-    }
+    public void updateIsAuthCalled() { this.isAuthCalled = true; }
+
+    public void updateAuthenticated() { this.authenticated = true; }
 }
