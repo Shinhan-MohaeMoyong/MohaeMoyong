@@ -29,7 +29,7 @@ public class DemandDepositApiAdapter {
     @Value("${api.shinhan.api-key}")
     private String apiKey;
 
-    @Value("{api.shinhan.authCode-authText}")
+    @Value("${api.shinhan.authCode-authText}")
     private String authPath;
 
     // 생성자를 통해 RestTemplate Bean을 주입받습니다.
