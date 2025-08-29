@@ -9,4 +9,5 @@ public class AccountCreateRequest {
     private String accountName;
     private String accountTypeUniqueNo;
     private Long targetAmount;
+    private String accountNo;
 }
