@@ -391,4 +391,53 @@ public class DemandDepositApiAdapter {
             throw new RuntimeException("1원 이체 인증코드 확인에 실패했습니다.");
         }
     }
+
+    /**
+     * 계좌 단건 조회를 요청하는 API를 호출합니다. (새로 추가된 메서드)
+     *
+     * @param userKey   사용자 고유 키
+     * @param accountNo 조회할 계좌 번호
+     * @return 조회된 계좌 상세 정보가 담긴 DTO
+     */
+    public CreateDemandDepositAccountResponse inquireDemandDepositAccount(String userKey, String accountNo) {
+        // 1. API 요청을 위한 URL을 준비합니다.
+        String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccount";
+
+        // 2. 헤더와 요청 본문을 생성합니다.
+        RequestHeader header = headerFactory.createHeader("inquireDemandDepositAccount", userKey);
+        InquireDemandDepositAccountRequest requestBody = new InquireDemandDepositAccountRequest(header, accountNo);
+
+        log.info("계좌 단건 조회 요청: 계좌번호 [{}]", accountNo);
+
+        try {
+            // 3. RestTemplate을 사용하여 POST 요청을 보냅니다.
+            CreateDemandDepositAccountResponse response = restTemplate.postForObject(url, requestBody, CreateDemandDepositAccountResponse.class);
+
+            if (response == null) {
+                throw new RuntimeException("API 응답이 비어있습니다.");
+            }
+
+            log.info("계좌 단건 조회 성공. 응답 코드: {}", response.getHeader().getResponseCode());
+            return response;
+
+        } catch (HttpClientErrorException e) { // 4xx 에러 처리
+            String errorBody = e.getResponseBodyAsString();
+            log.warn("API 클라이언트 오류: {}, 응답: {}", e.getStatusCode(), errorBody);
+
+            ExceptionResponseDto errorResponse;
+            try {
+                errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
+            } catch (Exception parseException) {
+                log.error("API 에러 응답 파싱 실패", parseException);
+                throw new RuntimeException("API 에러 응답을 파싱할 수 없습니다: " + errorBody);
+            }
+
+            // 파싱 성공 후 ApiErrorException으로 변환하여 던집니다.
+            throw new ApiErrorException(errorResponse.getResponseCode(), errorResponse.getResponseMessage());
+
+        } catch (Exception e) { // 그 외 모든 예외 처리
+            log.error("계좌 단건 조회 요청 중 알 수 없는 오류 발생", e);
+            throw new RuntimeException("계좌 단건 조회 요청에 실패했습니다.");
+        }
+    }
 }

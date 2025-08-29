@@ -53,13 +53,35 @@ public class AccountController {
     /**
      * 계좌 생성의 2단계: 1원 인증 코드 검증 및 계좌 생성 API
      */
-    @PostMapping("/auth")
+    @PostMapping("/auth/create")
     public ResponseEntity<String> verifyAndCreateAccount(
             @CurrentUser UserPrincipal userPrincipal,
             @RequestBody AccountVerificationRequest request,
             HttpServletRequest httpServletRequest) { // HttpSession을 사용하기 위해 추가
 
         accountService.verifyAndCreateAccount(userPrincipal, request, httpServletRequest.getSession());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body("계좌 인증 및 생성이 성공적으로 완료되었습니다.");
+    }
+
+    @PostMapping("/fetch")
+    public ResponseEntity<?> fetchAccount(@CurrentUser UserPrincipal userPrincipal, @RequestBody AccountCreateRequest request,
+                                            HttpServletRequest httpServletRequest) {
+
+        accountService.fetchAccount(userPrincipal, request, httpServletRequest.getSession());
+
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+    /**
+     * 계좌 불러오기 생성의 2단계: 1원 인증 코드 검증 및 계좌 생성 API
+     */
+    @PostMapping("/auth/fetch")
+    public ResponseEntity<String> verifyAndFetchAccount(
+            @CurrentUser UserPrincipal userPrincipal,
+            @RequestBody AccountVerificationRequest request,
+            HttpServletRequest httpServletRequest) { // HttpSession을 사용하기 위해 추가
+
+        accountService.verifyAndFetchAccount(userPrincipal, request, httpServletRequest.getSession());
 
         return ResponseEntity.status(HttpStatus.CREATED).body("계좌 인증 및 생성이 성공적으로 완료되었습니다.");
     }
