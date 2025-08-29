@@ -62,7 +62,9 @@ public class AccountService {
                 .collect(Collectors.toMap(InquireDemandDepositAccountListResponse.Record::getAccountNo, InquireDemandDepositAccountListResponse.Record::getAccountBalance));
 
         // 4. 각 계좌별로 순회하며 최종 응답 DTO 리스트 생성
-        return userAccounts.stream().map(account -> {
+        return userAccounts.stream()
+                .filter(account -> balanceMap.containsKey(account.getAccountNumber())) // API 응답에 존재하는 계좌만 필터링
+                .map(account -> {
             Long currentBalance = balanceMap.getOrDefault(account.getAccountNumber(), 0L);
             Long targetAmount = account.getTargetAmount();
 

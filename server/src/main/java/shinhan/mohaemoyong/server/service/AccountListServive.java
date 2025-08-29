@@ -54,6 +54,8 @@ public class AccountListServive {
 
         // 5. stream의 map 안에서 수정된 toDto 메서드를 호출하여 데이터 조합
         return records.stream()
+                // ourAccountMap에 키(계좌번호)가 존재하는 레코드만 다음 단계로 전달합니다.
+                .filter(record -> ourAccountMap.containsKey(record.getAccountNo()))
                 .map(record -> {
                     // Map에서 현재 record에 해당하는 우리 DB 정보를 찾습니다. (없으면 null)
                     Accounts ourAccount = ourAccountMap.get(record.getAccountNo());
