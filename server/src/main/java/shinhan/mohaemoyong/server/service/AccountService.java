@@ -1,6 +1,9 @@
 package shinhan.mohaemoyong.server.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ import shinhan.mohaemoyong.server.repository.PlanRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 import shinhan.mohaemoyong.server.service.financedto.InquireTransactionHistoryListRequestDto;
 
+import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +43,11 @@ public class AccountService {
     private final UserRepository userRepository;
     private final DemandDepositApiAdapter demandDepositApiAdapter;
     private final PlanRepository planRepository;
+    private final OneWonAuthService oneWonAuthService;
+
+    // 세션에 저장할 임시 정보 객체의 키로 사용할 상수
+    private static final String PENDING_ACCOUNT_INFO = "pendingAccountInfo";
+
 
     /**
      * 사용자의 모든 계좌에 대한 저축 현황을 조회합니다.
@@ -62,7 +71,9 @@ public class AccountService {
                 .collect(Collectors.toMap(InquireDemandDepositAccountListResponse.Record::getAccountNo, InquireDemandDepositAccountListResponse.Record::getAccountBalance));
 
         // 4. 각 계좌별로 순회하며 최종 응답 DTO 리스트 생성
-        return userAccounts.stream().map(account -> {
+        return userAccounts.stream()
+                .filter(account -> balanceMap.containsKey(account.getAccountNumber())) // API 응답에 존재하는 계좌만 필터링
+                .map(account -> {
             Long currentBalance = balanceMap.getOrDefault(account.getAccountNumber(), 0L);
             Long targetAmount = account.getTargetAmount();
 
@@ -141,29 +152,145 @@ public class AccountService {
     }
 
     @Transactional
-    public void createAccount(UserPrincipal userPrincipal, AccountCreateRequest request) {
-        // 0. userKey로 User 엔티티를 조회 (DB 저장을 위해 필요)
+    public void createAccount(UserPrincipal userPrincipal, AccountCreateRequest request, HttpSession session) {
+
+        try {
+            oneWonAuthService.oneWonAuthCall(userPrincipal, request.getAccountNo());
+        } catch (ApiErrorException e) {
+            throw e;
+        }
+
+        // 2. 계좌 생성에 필요한 정보를 DTO 객체로 만들어 세션에 저장
+        //    (주의: User 엔티티 같은 영속 객체를 세션에 직접 저장하는 것은 피해야 합니다)
+        PendingAccountInfo pendingInfo = new PendingAccountInfo(
+                request.getAccountNo(),
+                request.getAccountName(),
+                request.getTargetAmount(),
+                request.getAccountTypeUniqueNo()
+        );
+        session.setAttribute(PENDING_ACCOUNT_INFO, pendingInfo);
+
+        // 세션 유효 시간 설정 (10분)
+        session.setMaxInactiveInterval(60 * 10);
+    }
+
+    /**
+     * 2단계: 1원 인증 코드 검증 및 계좌 생성
+     */
+    @Transactional
+    public void verifyAndCreateAccount(UserPrincipal userPrincipal, AccountVerificationRequest request, HttpSession session) {
+        // 1. 세션에서 임시 저장된 계좌 정보를 가져옴
+        PendingAccountInfo pendingInfo = (PendingAccountInfo) session.getAttribute(PENDING_ACCOUNT_INFO);
+
+        // 세션 정보가 없거나, 요청된 계좌번호와 다를 경우 비정상적인 접근으로 처리
+        if (pendingInfo == null || !pendingInfo.getAccountNo().equals(request.getAccountNo())) {
+            throw new IllegalStateException("인증 정보가 만료되었거나 올바르지 않습니다. 처음부터 다시 시도해주세요.");
+        }
+
+        try {
+            // 2. 1원 인증 코드 검증 (실패 시 예외 발생)
+            oneWonAuthService.oneWonAuth(userPrincipal, request.getAccountNo(), request.getAuthCode());
+        } catch (ApiErrorException e) {
+            throw e;
+        }
+
+        // 이제부터 저장 로직 (우리DB, 금융망DB 둘다)
+
+        // 3. User 엔티티 조회
         User user = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        String userKey = userPrincipal.getUserkey();
+        // 4. 금융망 DB에 계좌 생성 (세션에서 가져온 정보 사용)
+        CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.createDemandDepositAccount(
+                user.getUserkey(),
+                pendingInfo.getAccountTypeUniqueNo()
+        );
 
+        // 5. 우리 DB에도 계좌 정보 저장 (세션에서 가져온 정보 사용)
+        Accounts newAccount = createResponse.toEntity(
+                user,
+                pendingInfo.getCustomAccountName(),
+                pendingInfo.getCustomTargetAmount()
+        );
 
-        String productUniqueNo = request.getAccountTypeUniqueNo();
-
-        // 3. 싸피 금융 API를 호출하여 계좌를 실제로 생성합니다.
-        CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.createDemandDepositAccount(userKey, productUniqueNo);
-
-        // 이거는 사용자가 입력한 계좌별칭
-        String customAccountName = request.getAccountName();
-
-        // 이건 사용자가 입력한 목표 저축금액
-        Long customTargetAmount = request.getTargetAmount();
-
-        Accounts newAccount = createResponse.toEntity(user, customAccountName, customTargetAmount);
-
-        // 5. 생성된 엔티티를 우리 DB에 저장합니다.
         accountsRepository.save(newAccount);
+
+        // 6. 처리가 완료되었으므로 세션에서 임시 정보 제거
+        session.removeAttribute(PENDING_ACCOUNT_INFO);
+    }
+
+    @Transactional
+    public void fetchAccount(UserPrincipal userPrincipal, AccountCreateRequest request, HttpSession session) {
+
+        try {
+            oneWonAuthService.oneWonAuthCall(userPrincipal, request.getAccountNo());
+        } catch (ApiErrorException e) {
+            throw e;
+        }
+
+        // 2. 계좌 생성에 필요한 정보를 DTO 객체로 만들어 세션에 저장
+        //    (주의: User 엔티티 같은 영속 객체를 세션에 직접 저장하는 것은 피해야 합니다)
+        PendingAccountInfo pendingInfo = new PendingAccountInfo(
+                request.getAccountNo()
+        );
+        session.setAttribute(PENDING_ACCOUNT_INFO, pendingInfo);
+
+        // 세션 유효 시간 설정 (10분)
+        session.setMaxInactiveInterval(60 * 10);
+    }
+
+    /**
+     * 2단계: 1원 인증 코드 검증 및 계좌 생성
+     */
+    @Transactional
+    public void verifyAndFetchAccount(UserPrincipal userPrincipal, AccountVerificationRequest request, HttpSession session) {
+        // 1. 세션에서 임시 저장된 계좌 정보를 가져옴
+        PendingAccountInfo pendingInfo = (PendingAccountInfo) session.getAttribute(PENDING_ACCOUNT_INFO);
+
+        // 세션 정보가 없거나, 요청된 계좌번호와 다를 경우 비정상적인 접근으로 처리
+        if (pendingInfo == null || !pendingInfo.getAccountNo().equals(request.getAccountNo())) {
+            throw new IllegalStateException("인증 정보가 만료되었거나 올바르지 않습니다. 처음부터 다시 시도해주세요.");
+        }
+
+        try {
+            // 2. 1원 인증 코드 검증 (실패 시 예외 발생)
+            oneWonAuthService.oneWonAuth(userPrincipal, request.getAccountNo(), request.getAuthCode());
+        } catch (ApiErrorException e) {
+            throw e;
+        }
+
+        // 이제부터 저장 로직 (우리DB)
+
+        // 3. User 엔티티 조회
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 4. 금융망 DB에 계좌 생성 (세션에서 가져온 정보 사용)
+        CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.inquireDemandDepositAccount(
+                user.getUserkey(),
+                pendingInfo.getAccountNo()
+        );
+
+        // 5. 우리 DB에도 계좌 정보 저장 (세션에서 가져온 정보 사용)
+        Accounts newAccount = createResponse.toEntityOrigin(user);
+
+        accountsRepository.save(newAccount);
+
+        // 6. 처리가 완료되었으므로 세션에서 임시 정보 제거
+        session.removeAttribute(PENDING_ACCOUNT_INFO);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class PendingAccountInfo implements Serializable {
+        private String accountNo;
+        private String customAccountName;
+        private Long customTargetAmount;
+        private String accountTypeUniqueNo;
+
+        private PendingAccountInfo(String accountNo) {
+            this.accountNo = accountNo;
+        }
     }
 
     @Transactional

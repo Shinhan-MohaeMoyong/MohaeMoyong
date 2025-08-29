@@ -45,4 +45,16 @@ public class CreateDemandDepositAccountResponse {
                 .targetAmount(customTargetAmount) // 파라미터로 받은 목표 저축금액
                 .build();
     }
+
+    public Accounts toEntityOrigin(User userParam) {
+        return Accounts.builder()
+                .user(userParam)
+                .username(userParam.getName()) // User 엔티티에서 사용자 실명 가져오기
+                .accountName(userParam.getName() + "님의 계좌") // 파라미터로 받은 계좌 별칭
+                .accountNumber(this.REC.getAccountNo()) // API 응답으로 받은 계좌번호
+                .bankCode(this.REC.getBankCode()) // API 응답으로 받은 은행 코드
+                .bankName("신한은행")
+                .targetAmount(100000L) // 파라미터로 받은 목표 저축금액
+                .build();
+    }
 }
