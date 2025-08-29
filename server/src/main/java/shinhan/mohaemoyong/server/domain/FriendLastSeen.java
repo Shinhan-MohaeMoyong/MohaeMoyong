@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "friend_last_seen")
 @Getter
 @NoArgsConstructor
 public class FriendLastSeen {
