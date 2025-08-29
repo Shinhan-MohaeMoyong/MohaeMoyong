@@ -13,7 +13,7 @@ import shinhan.mohaemoyong.server.adapter.exception.ExceptionResponseDto;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiErrorException.class)
-    public ResponseEntity<ExceptionResponseDto> handleApiErrorException(ApiErrorException e) {
+    public ResponseEntity<ExceptionResponseDto> handleApiErrorException(ApiErrorException e) { // 내가 정의한 에러클래스
         log.warn("API 에러 발생: 코드 [{}], 메시지 [{}]", e.getErrorCode(), e.getErrorMessage());
 
         ExceptionResponseDto errorResponse = ExceptionResponseDto.builder()
@@ -28,6 +28,9 @@ public class GlobalExceptionHandler {
                 status = HttpStatus.FORBIDDEN; // 403
                 break;
             case "A1014": // 특정 금융 API 에러
+                status = HttpStatus.BAD_REQUEST; // 400
+                break;
+            case "E002" : // 1원 송금 인증코드 틀림
                 status = HttpStatus.BAD_REQUEST; // 400
                 break;
             default:

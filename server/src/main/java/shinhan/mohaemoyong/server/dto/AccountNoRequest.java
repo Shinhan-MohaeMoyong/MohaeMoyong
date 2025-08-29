@@ -5,9 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Builder
 @Getter @NoArgsConstructor @AllArgsConstructor
 public class AccountNoRequest {
     private String accountNo;
+    private String authCode;
 }
 
