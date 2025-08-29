@@ -61,10 +61,17 @@ public class Accounts {
     @Column(name = "authenticated", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean authenticated = false;
 
+    @Column(name = "isAuthCalled", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean isAuthCalled = false;
+
     // 내부 전용
     void setUserInternal(User user) { this.user = user; }
 
     public void updateTargetAmount(Long targetAmount) { this.targetAmount = targetAmount; }
 
     public void updateAlias(String alias) { this.accountName = alias; }
+
+    public void updateIsAuthCalled() {
+        this.isAuthCalled = true;
+    }
 }

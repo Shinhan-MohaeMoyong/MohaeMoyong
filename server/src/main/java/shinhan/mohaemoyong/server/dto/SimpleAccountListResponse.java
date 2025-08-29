@@ -12,6 +12,7 @@ public class SimpleAccountListResponse {
     private Long accountBalance;
     private String accountName;
     private Boolean authenticated;
+    private Boolean isAuthCalled;
 
     // 우리 DB 에서 필요한 데이터는 ourAccount, 금융망 DB 에서 필요한 데이터는 record
     public static SimpleAccountListResponse toDto(InquireDemandDepositAccountListResponse.Record record, Accounts ourAccount) {
@@ -21,11 +22,15 @@ public class SimpleAccountListResponse {
         // 혹시나 우리 DB 에 등록이 되어있지 않은 경우 NullPointerException 방지
         Boolean finalAuthenticated = (ourAccount != null) ? ourAccount.getAuthenticated() : false;
 
+        // 혹시나 우리 DB 에 등록이 되어있지 않은 경우 NullPointerException 방지
+        Boolean finalIsAuthCalled = (ourAccount != null) ? ourAccount.getIsAuthCalled() : false;
+
         return SimpleAccountListResponse.builder()
                 .accountNo(record.getAccountNo())
                 .accountBalance(record.getAccountBalance())
                 .accountName(finalAccountName)
                 .authenticated(finalAuthenticated)
+                .isAuthCalled(finalIsAuthCalled)
                 .build();
     }
 
