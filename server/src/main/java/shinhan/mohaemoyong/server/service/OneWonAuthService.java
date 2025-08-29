@@ -1,6 +1,7 @@
 package shinhan.mohaemoyong.server.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
@@ -13,7 +14,7 @@ import shinhan.mohaemoyong.server.repository.AccountRepository;
 import shinhan.mohaemoyong.server.repository.UserRepository;
 
 
-@Service
+@Service @Slf4j
 @RequiredArgsConstructor
 public class OneWonAuthService {
 
@@ -23,18 +24,30 @@ public class OneWonAuthService {
 
     @Transactional
     public void oneWonAuthCall(UserPrincipal userPrincipal, AccountNoRequest request) {
-        User user = userRepository.findById(userPrincipal.getId()).orElseThrow(() -> new IllegalArgumentException("[ERROR] 존재하지 않는 사용자입니다."));
+        // 1. 사용자 정보 조회
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("[ERROR] 존재하지 않는 사용자입니다."));
         String accountNo = request.getAccountNo();
 
         try {
-            demandDepositApiAdapter.oneWonAuthCall(accountNo);
-        } catch (ApiErrorException e) {
+            // 2. 외부 API 어댑터 호출 (userKey 추가하여 전달)
+            log.info("1원 입금 인증을 시작합니다. 계좌번호: {}", accountNo);
+            demandDepositApiAdapter.oneWonAuthCall(user.getUserkey(), accountNo);
 
+        } catch (ApiErrorException e) {
+            // 3. 외부 API 호출 실패 시 예외 처리
+            log.error("1원 입금 인증 API 호출에 실패했습니다. 응답 코드: {}, 메시지: {}", e.getErrorCode(), e.getErrorMessage());
+            // 컨트롤러에서 처리할 수 있도록 예외를 다시 던지거나, 특정 응답 DTO를 반환할 수 있습니다.
+            throw e;
         }
 
-        // 1원 송금 요청 어댑터가 성공
-        Accounts accounts = accountRepository.findByAccountNumberAndUser(accountNo, user).orElseThrow(() -> new IllegalArgumentException("[ERROR] 존재하지 않는 계좌입니다."));
+        // 4. API 호출 성공 후, 우리 서비스의 계좌 정보 업데이트
+        Accounts accounts = accountRepository.findByAccountNumberAndUser(accountNo, user)
+                .orElseThrow(() -> new IllegalArgumentException("[ERROR] 존재하지 않는 계좌입니다."));
         accounts.updateIsAuthCalled(); // isAuthCalled = true;
+
+        log.info("1원 입금 인증 요청이 성공적으로 처리되었습니다. 계좌번호: {}", accountNo);
+
     }
 
     @Transactional

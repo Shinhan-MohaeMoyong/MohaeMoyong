@@ -29,6 +29,9 @@ public class DemandDepositApiAdapter {
     @Value("${api.shinhan.api-key}")
     private String apiKey;
 
+    @Value("api.shinhan.authCode-authText")
+    private String authPath;
+
     // 생성자를 통해 RestTemplate Bean을 주입받습니다.
     public DemandDepositApiAdapter(RestTemplate restTemplate, HeaderFactory headerFactory, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -294,5 +297,53 @@ public class DemandDepositApiAdapter {
     }
 
 
+    /**
+     * 1원 송금을 요청하는 외부 금융 API(openAccountAuth)를 호출합니다.
+     *
+     * @param userKey   사용자 고유 키
+     * @param accountNo 인증할 계좌 번호
+     * @return 1원 송금 요청 결과가 담긴 DTO
+     */
+    public void oneWonAuthCall(String userKey, String accountNo) {
+        // 1. API 요청을 위한 URL을 준비합니다.
+        String url = baseUrl + "/ssafy/api/v1/edu/accountAuth/openAccountAuth";
+
+        // 2. 헤더와 요청 본문을 생성합니다.
+        RequestHeader header = headerFactory.createHeader("openAccountAuth", userKey);
+        // 명세에 따라 authText는 "SSAFY"로 고정합니다.
+
+        // 요청 DTO를 생성합니다.
+
+        AuthCodeRequest requestBody = new AuthCodeRequest(header, accountNo, authPath);
+
+        log.info("외부 API 1원 송금 요청: 계좌번호 [{}]", accountNo);
+
+        try {
+            // 3. RestTemplate을 사용하여 POST 요청을 보냅니다.
+            restTemplate.postForObject(url, requestBody, Void.class);
+
+            log.info("외부 API 1원 송금 요청 성공");
+
+        } catch (HttpClientErrorException e) { // 4xx 에러 처리
+            String errorBody = e.getResponseBodyAsString();
+            log.warn("API 클라이언트 오류: {}, 응답: {}", e.getStatusCode(), errorBody);
+
+            ExceptionResponseDto errorResponse;
+            try {
+                errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
+            } catch (Exception parseException) {
+                log.error("API 에러 응답 파싱 실패", parseException);
+                throw new RuntimeException("API 에러 응답을 파싱할 수 없습니다: " + errorBody);
+            }
+
+            // 파싱 성공 후 ApiErrorException으로 변환하여 던집니다.
+            log.error("1원 송금 API 호출 실패(HTTP {}) - 코드: {}, 메시지: {}", e.getStatusCode(), errorResponse.getResponseCode(), errorResponse.getResponseMessage());
+            throw new ApiErrorException(errorResponse.getResponseCode(), errorResponse.getResponseMessage());
+
+        } catch (Exception e) { // 그 외 모든 예외 처리
+            log.error("1원 송금 요청 중 알 수 없는 오류 발생", e);
+            throw new RuntimeException("1원 송금 요청에 실패했습니다.");
+        }
+    }
 
 }
