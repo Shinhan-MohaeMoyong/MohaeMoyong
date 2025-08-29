@@ -177,52 +177,92 @@ public class PlanService {
 
     private List<Occurrence> buildOccurrences(LocalDateTime start, LocalDateTime end, RecurrenceCreateReq r) {
         List<Occurrence> out = new ArrayList<>();
+
+        // 반복 아님
         if (r == null || !Boolean.TRUE.equals(r.enabled()) || r.count() == null || r.count() <= 1) {
-            out.add(new Occurrence(start, end));
+            // 단일 일정이라도 예외일에 해당하면 생성하지 않음
+            if (!isExcluded(start, r)) {
+                out.add(new Occurrence(start, end));
+            }
             return out;
         }
 
-        final int count = r.count();
+        final int targetCount = r.count(); // 최종 생성 목표 개수 (예외 제외 후)
         final int interval = (r.interval() == null || r.interval() < 1) ? 1 : r.interval();
         final java.time.Duration dur = java.time.Duration.between(start, end);
         final String freq = (r.freq() == null) ? "DAILY" : r.freq().toUpperCase();
 
+        int generated = 0;
+
         switch (freq) {
             case "DAILY" -> {
-                for (int i = 0; i < count; i++) {
+                for (int i = 0; i < targetCount; i++) {
                     LocalDateTime s = start.plusDays((long) i * interval);
-                    out.add(new Occurrence(s, s.plus(dur)));
+                    if (!isExcluded(s, r)) {
+                        out.add(new Occurrence(s, s.plus(dur)));
+                    }
                 }
             }
             case "WEEKLY" -> {
                 List<java.time.DayOfWeek> order = weeklyOrder(r, start);
-                int generated = 0;
                 int weekBlock = 0;
-                while (generated < count) {
+                int tried = 0;
+                while (tried < targetCount) {   // targetCount번 "시도"
                     LocalDate baseMonday = start.toLocalDate()
                             .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
                             .plusWeeks((long) weekBlock * interval);
+
                     for (java.time.DayOfWeek dow : order) {
+                        if (tried >= targetCount) break;
                         LocalDate candidate = baseMonday.with(java.time.temporal.TemporalAdjusters.nextOrSame(dow));
                         if (weekBlock == 0 && candidate.isBefore(start.toLocalDate())) continue;
+
                         LocalDateTime s = LocalDateTime.of(candidate, start.toLocalTime());
-                        out.add(new Occurrence(s, s.plus(dur)));
-                        generated++;
-                        if (generated >= count) break;
+                        if (!isExcluded(s, r)) {
+                            out.add(new Occurrence(s, s.plus(dur)));
+                        }
+                        tried++;
                     }
                     weekBlock++;
                 }
             }
             case "MONTHLY" -> {
-                for (int i = 0; i < count; i++) {
+                for (int i = 0; i < targetCount; i++) {
                     LocalDateTime s = start.plusMonths((long) i * interval);
-                    out.add(new Occurrence(s, s.plus(dur)));
+                    if (!isExcluded(s, r)) {
+                        out.add(new Occurrence(s, s.plus(dur)));
+                    }
                 }
             }
+
             default -> throw new IllegalArgumentException("지원하지 않는 반복 주기: " + freq);
         }
+
         return out;
     }
+
+    /** r.exceptions() 를 LocalDate 기준으로 비교하여 제외 여부 판단 */
+    private boolean isExcluded(LocalDateTime candidateStart, RecurrenceCreateReq r) {
+        if (r == null || r.exceptions() == null || r.exceptions().isEmpty()) return false;
+
+        // 예외일이 String("YYYY-MM-DD")일 수도, LocalDate일 수도 있다고 가정하고 모두 수용
+        Set<LocalDate> exceptionDays = new HashSet<>();
+        for (Object ex : r.exceptions()) {
+            if (ex == null) continue;
+            if (ex instanceof LocalDate ld) {
+                exceptionDays.add(ld);
+            } else if (ex instanceof CharSequence cs) {
+                exceptionDays.add(LocalDate.parse(cs.toString())); // "YYYY-MM-DD"
+            } else {
+                // DTO 타입이 명확하면 여길 정리하세요.
+                exceptionDays.add(LocalDate.parse(ex.toString()));
+            }
+        }
+
+        LocalDate candDate = candidateStart.toLocalDate();
+        return exceptionDays.contains(candDate);
+    }
+
 
     private List<java.time.DayOfWeek> weeklyOrder(RecurrenceCreateReq r, LocalDateTime start) {
         if (r.byDays() == null || r.byDays().isEmpty()) {
