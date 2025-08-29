@@ -29,7 +29,7 @@ public class DemandDepositApiAdapter {
     @Value("${api.shinhan.api-key}")
     private String apiKey;
 
-    @Value("api.shinhan.authCode-authText")
+    @Value("{api.shinhan.authCode-authText}")
     private String authPath;
 
     // 생성자를 통해 RestTemplate Bean을 주입받습니다.
@@ -310,7 +310,6 @@ public class DemandDepositApiAdapter {
 
         // 2. 헤더와 요청 본문을 생성합니다.
         RequestHeader header = headerFactory.createHeader("openAccountAuth", userKey);
-        // 명세에 따라 authText는 "SSAFY"로 고정합니다.
 
         // 요청 DTO를 생성합니다.
 
@@ -346,4 +345,50 @@ public class DemandDepositApiAdapter {
         }
     }
 
+    /**
+     * 사용자가 입력한 1원 이체 인증코드를 확인하는 외부 금융 API를 호출합니다.
+     *
+     * @param userKey    사용자 고유 키
+     * @param accountNo  인증할 계좌 번호
+     * @param authCode   사용자가 입력한 인증 코드
+     * @return 인증 결과가 담긴 DTO
+     */
+    public CheckAuthCodeResponse oneWonAuth(String userKey, String accountNo, String authCode) {
+        // 1. API 요청을 위한 URL을 준비합니다.
+        String url = baseUrl + "/ssafy/api/v1/edu/accountAuth/checkAuthCode";
+
+        // 2. 헤더와 요청 본문을 생성합니다.
+        RequestHeader header = headerFactory.createHeader("checkAuthCode", userKey);
+        CheckAuthCodeRequest requestBody = new CheckAuthCodeRequest(header, accountNo, authPath, authCode);
+
+        log.info("외부 API 1원 이체 인증코드 확인 요청: 계좌번호 [{}]", accountNo);
+
+        try {
+            // 3. RestTemplate을 사용하여 POST 요청을 보냅니다.
+            CheckAuthCodeResponse response = restTemplate.postForObject(url, requestBody, CheckAuthCodeResponse.class);
+            if (response == null) {
+                throw new RuntimeException("API 응답이 비어있습니다.");
+            }
+            log.info("외부 API 1원 이체 인증코드 확인 성공. 응답 코드: {}", response.getHeader().getResponseCode());
+            return response;
+        } catch (HttpClientErrorException e) { // 4xx 에러 처리
+            String errorBody = e.getResponseBodyAsString();
+            log.warn("API 클라이언트 오류: {}, 응답: {}", e.getStatusCode(), errorBody);
+
+            ExceptionResponseDto errorResponse;
+            try {
+                errorResponse = objectMapper.readValue(errorBody, ExceptionResponseDto.class);
+            } catch (Exception parseException) {
+                log.error("API 에러 응답 파싱 실패", parseException);
+                throw new RuntimeException("API 에러 응답을 파싱할 수 없습니다: " + errorBody);
+            }
+
+            // 파싱 성공 후 ApiErrorException으로 변환하여 던집니다.
+            throw new ApiErrorException(errorResponse.getResponseCode(), errorResponse.getResponseMessage());
+
+        } catch (Exception e) {
+            log.error("1원 이체 인증코드 확인 실패. 에러: {}", e.getMessage());
+            throw new RuntimeException("1원 이체 인증코드 확인에 실패했습니다.");
+        }
+    }
 }
