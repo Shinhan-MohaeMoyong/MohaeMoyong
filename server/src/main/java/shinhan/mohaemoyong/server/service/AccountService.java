@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -281,14 +282,14 @@ public class AccountService {
     }
 
     @Getter
-    @AllArgsConstructor
+    @AllArgsConstructor @NoArgsConstructor
     private static class PendingAccountInfo implements Serializable {
         private String accountNo;
         private String customAccountName;
         private Long customTargetAmount;
         private String accountTypeUniqueNo;
 
-        private PendingAccountInfo(String accountNo) {
+        public PendingAccountInfo(String accountNo) {
             this.accountNo = accountNo;
         }
     }
