@@ -399,7 +399,7 @@ public class DemandDepositApiAdapter {
      * @param accountNo 조회할 계좌 번호
      * @return 조회된 계좌 상세 정보가 담긴 DTO
      */
-    public CreateDemandDepositAccountResponse inquireDemandDepositAccount(String userKey, String accountNo) {
+    public InquireDemandDepositAccountResponse inquireDemandDepositAccount(String userKey, String accountNo) {
         // 1. API 요청을 위한 URL을 준비합니다.
         String url = baseUrl + "/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccount";
 
@@ -411,13 +411,13 @@ public class DemandDepositApiAdapter {
 
         try {
             // 3. RestTemplate을 사용하여 POST 요청을 보냅니다.
-            CreateDemandDepositAccountResponse response = restTemplate.postForObject(url, requestBody, CreateDemandDepositAccountResponse.class);
+            InquireDemandDepositAccountResponse response = restTemplate.postForObject(url, requestBody, InquireDemandDepositAccountResponse.class);
 
             if (response == null) {
                 throw new RuntimeException("API 응답이 비어있습니다.");
             }
 
-            log.info("계좌 단건 조회 성공. 응답 코드: {}", response.getHeader().getResponseCode());
+            log.info("계좌 단건 조회 성공");
             return response;
 
         } catch (HttpClientErrorException e) { // 4xx 에러 처리

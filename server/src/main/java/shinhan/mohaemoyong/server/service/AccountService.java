@@ -4,15 +4,13 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shinhan.mohaemoyong.server.adapter.deposit.DemandDepositApiAdapter;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.response.CreateDemandDepositAccountResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
-import shinhan.mohaemoyong.server.adapter.deposit.dto.response.UpdateDemandDepositAccountTransferResponse;
+import shinhan.mohaemoyong.server.adapter.deposit.dto.response.*;
 import shinhan.mohaemoyong.server.adapter.exception.ApiErrorException;
 import shinhan.mohaemoyong.server.domain.Accounts;
 import shinhan.mohaemoyong.server.domain.Plans;
@@ -266,13 +264,13 @@ public class AccountService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 4. 금융망 DB에 계좌 생성 (세션에서 가져온 정보 사용)
-        CreateDemandDepositAccountResponse createResponse = demandDepositApiAdapter.inquireDemandDepositAccount(
+        InquireDemandDepositAccountResponse response = demandDepositApiAdapter.inquireDemandDepositAccount(
                 user.getUserkey(),
                 pendingInfo.getAccountNo()
         );
 
         // 5. 우리 DB에도 계좌 정보 저장 (세션에서 가져온 정보 사용)
-        Accounts newAccount = createResponse.toEntityOrigin(user);
+        Accounts newAccount = response.toEntity(user, response);
 
         accountsRepository.save(newAccount);
 
@@ -281,14 +279,14 @@ public class AccountService {
     }
 
     @Getter
-    @AllArgsConstructor
+    @AllArgsConstructor @NoArgsConstructor
     private static class PendingAccountInfo implements Serializable {
         private String accountNo;
         private String customAccountName;
         private Long customTargetAmount;
         private String accountTypeUniqueNo;
 
-        private PendingAccountInfo(String accountNo) {
+        public PendingAccountInfo(String accountNo) {
             this.accountNo = accountNo;
         }
     }
