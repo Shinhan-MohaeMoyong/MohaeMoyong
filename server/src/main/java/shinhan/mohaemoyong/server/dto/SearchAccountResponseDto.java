@@ -1,13 +1,15 @@
 package shinhan.mohaemoyong.server.dto;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
+
 import java.util.List;
-import lombok.AllArgsConstructor;
+
 import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SearchAccountResponseDto {
     private String accountNumber;      // 계좌번호
     private Long balance;              // 잔여금액

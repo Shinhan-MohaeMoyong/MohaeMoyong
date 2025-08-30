@@ -1,7 +1,9 @@
 package shinhan.mohaemoyong.server.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireTransactionHistoryListResponse;
 import shinhan.mohaemoyong.server.domain.Accounts;
 
@@ -11,6 +13,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AccountDetailResponse {
 
     private String accountNo;

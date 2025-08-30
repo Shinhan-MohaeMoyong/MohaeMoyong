@@ -1,12 +1,16 @@
 package shinhan.mohaemoyong.server.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import shinhan.mohaemoyong.server.adapter.deposit.dto.response.InquireDemandDepositAccountListResponse;
 import shinhan.mohaemoyong.server.domain.Accounts;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SimpleAccountListResponse {
     private String accountNo;
     private Long accountBalance;
