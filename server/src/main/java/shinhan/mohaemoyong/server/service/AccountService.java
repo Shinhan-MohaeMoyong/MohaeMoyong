@@ -247,8 +247,8 @@ public class AccountService {
         // 1. 세션에서 임시 저장된 계좌 정보를 가져옴
         PendingAccountInfo pendingInfo = (PendingAccountInfo) session.getAttribute(PENDING_ACCOUNT_INFO);
 
-        // 세션 정보가 없거나, 요청된 계좌번호와 다를 경우 비정상적인 접근으로 처리
-        if (pendingInfo == null || !pendingInfo.getAccountNo().equals(request.getAccountNo())) {
+        // 세션 정보가 없는경우 비정상적인 접근으로 처리
+        if (pendingInfo == null) {
             throw new IllegalStateException("인증 정보가 만료되었거나 올바르지 않습니다. 처음부터 다시 시도해주세요.");
         }
 
