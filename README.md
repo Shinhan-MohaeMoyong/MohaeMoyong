@@ -49,7 +49,7 @@
 ---
 
 ## 🗂 DB ERD
-
+<img width="1294" height="1500" alt="최종ERD" src="https://github.com/user-attachments/assets/f31ff941-10a5-4a9d-a583-96b3d968c623" />
 
 
 ## 📦 폴더 구조 (예시)
