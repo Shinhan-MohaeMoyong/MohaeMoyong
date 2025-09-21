@@ -90,8 +90,7 @@ EXPO_PUBLIC_SERVER_URL=https://api.example.com
 ## 시연영상
 <img width="1920" height="1080" alt="뭐해모여로고" src="https://github.com/user-attachments/assets/9ee849e1-593e-4548-b096-b913c816f87c" />
 
-[![Video Label](https://youtu.be/1eIJVZh9ppY/0.jpg)](https://youtu.be/1eIJVZh9ppY)
-https://youtu.be/1eIJVZh9ppY
+[![시연영상](https://youtu.be/1eIJVZh9ppY/0.jpg)](https://youtu.be/1eIJVZh9ppY)
 ---
 
 ## 🏃‍♀️ Expo 실행 방법 (Frontend)
